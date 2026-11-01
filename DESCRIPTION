@@ -1,0 +1,30 @@
+Package: pnr
+Title: Danish CPR Numbers: Cleaning, Derived Information, Diagnosis and Pseudonyms
+Version: 0.1.0
+Authors@R: person("Daniel", "Madsen", email = "danielmadsen@live.dk",
+    role = c("aut", "cre"))
+Description: Work with Danish CPR numbers (personnumre) in register data.
+    Standardise the identifier, derive birth date, age, sex and validity in
+    one native pass, diagnose what is wrong with a CPR column before it is
+    used as a key, and replace the identifier with a random serial number
+    before data leaves a secure environment.
+License: MIT + file LICENSE
+URL: https://dataniel.github.io/pnr, https://github.com/dataniel/pnr
+BugReports: https://github.com/dataniel/pnr/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Imports:
+    cli,
+    rlang
+Suggests:
+    data.table,
+    dplyr,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    tibble
+Config/Needs/website: pkgdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0
+NeedsCompilation: yes

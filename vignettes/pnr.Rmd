@@ -1,0 +1,186 @@
+---
+title: "Getting started with pnr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with pnr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>"
+)
+library(pnr)
+```
+
+A CPR column usually goes through four steps: find out what is wrong with
+it, standardise it, derive what the analysis needs, and replace it before
+the data leaves a secure environment. pnr has one function for each.
+
+All CPR numbers in this vignette are constructed examples.
+
+## `diagnose_cpr()`: what is wrong with the column
+
+Ask this first of a CPR column you did not produce yourself:
+
+```{r}
+x <- c("0101004007", "010100-4007", "101004007", "1.01004E+08",
+       "3102004007", "12345", "ukendt", NA, "1111111118")
+diagnose_cpr(x, as_of = "2025-01-01")
+```
+
+Every value gets one status: valid, missing, scientific notation, wrong
+length, other characters, or an invalid date. The notes below the problems
+overlap and are not errors, but each tells where the data has been: a
+restored leading zero means Excel, scientific notation means the digits
+are gone and the source must be read again with the column as text.
+
+The report shows counts and row numbers, never CPR numbers, so it can go
+into a log. The rows behind each check are kept in the result:
+
+```{r}
+d <- diagnose_cpr(x, as_of = "2025-01-01")
+d$checks[, c("check", "kind", "n")]
+d$checks$rows[d$checks$check == "invalid_date"][[1]]
+```
+
+A modulus-11 failure is only a note: since 2007 the CPR office issues
+numbers that do not satisfy it.
+
+## `clean_cpr()`: one form for joins
+
+Identifiers rarely arrive in one consistent shape: `111111-1118`, or a
+nine-digit CPR that lost its leading zero in Excel. Before a join, both
+sides need the same form, and that is all `clean_cpr()` does. It takes a
+vector and returns a vector, so the natural place for it is inside a
+`mutate()`:
+
+```{r}
+clean_cpr(c("111111-1118", "101004007", "1111111118"))
+```
+
+It zero-pads nine-digit values, because birth days 01 to 09 mean that a
+third of all CPR numbers start with a zero, which Excel drops. It does not
+validate: malformed values come back cleaned but still visibly malformed.
+
+## `add_cpr_info()`: birth date, age, sex, and validity
+
+`add_cpr_info()` appends selected information while preserving the original
+CPR column. Dashes, spaces, and lost leading zeroes are handled internally,
+with the same native rules as `clean_cpr()`. Each CPR is parsed once for all
+requested outputs, including multiple age calculations. Use `clean_cpr()`
+explicitly when the identifier will also be used for joins or export:
+
+```{r, eval=FALSE}
+df |>
+  dplyr::mutate(pnr = clean_cpr(pnr)) |>
+  add_cpr_info(pnr, age(year), sex, bday)
+```
+
+Without selections, the function adds `bday`, `age`, `sex`, `mod11`, and `valid`.
+Bare `age` and `age()` use today's date; explicit references make analysis
+reproducible.
+
+```{r}
+df <- data.frame(
+  pnr = c("1111111118", "111111-1118", "111111118"),
+  year = c(2024L, 2025L, 2026L)
+)
+add_cpr_info(df, pnr)
+add_cpr_info(df, pnr, sex, birth_date = bday)
+```
+
+Write `output_name = calculation` to rename a result. Each age calculation
+has its own reference, so several ages can be added in one call:
+
+```{r}
+df |>
+  add_cpr_info(
+    pnr,
+    primoalder = age(year),
+    medioalder = age(year, "medio"),
+    ultimoalder = age(year, "ultimo"),
+    sex,
+    bday
+  )
+```
+
+`age(year)` defaults to `"primo"` with `primo = "previous_ultimo"`
+(31 December of the previous year); `"medio"` means 1 July and
+`"ultimo"` means 31 December. `year` can be a scalar, a column, or an
+expression evaluated in the original input data.
+
+This default makes opening ages equal to the previous year's closing ages.
+It can also be written explicitly:
+
+```{r}
+add_cpr_info(df, pnr, primoalder = age(year, primo = "previous_ultimo"))
+```
+
+Someone born on 1 January 2000 is then 0 in counting year 2001;
+`age(year, primo = "jan1")` instead includes that day's birthday and gives 1.
+
+For a specific date, use `age(date = ...)` with a Date or ISO date string.
+Supply one reference for all rows or one per row. Missing references give
+missing ages. Use `.env$name` to explicitly access a caller variable when
+a column has the same name.
+
+```{r}
+add_cpr_info(df, pnr, alder = age(date = "2025-07-01"))
+df$reference <- as.Date(paste0(df$year, "-01-01"))
+add_cpr_info(df, pnr, alder = age(date = reference))
+```
+
+Existing output names cause an error with guidance to rename the selection
+or use `overwrite = TRUE`. Duplicate output names are always an error, and
+the source CPR column cannot be overwritten.
+
+`valid` means ten digits encoding a real calendar date, not confirmation
+that the CPR number was assigned. Missing and invalid CPR values give
+`valid = FALSE`. `mod11` is an independent checksum and is not part of
+`valid`. Choose `mod11` explicitly when selecting outputs if you need it.
+
+Age counts completed calendar years, not elapsed days divided by 365.25.
+For a person born on 29 February, age increases on 29 February in leap
+years and on 1 March in non-leap years. For a birth date of 29 February 2000:
+
+| Reference date | Age |
+| --- | ---: |
+| 2024-02-28 | 23 |
+| 2024-02-29 | 24 |
+| 2024-03-01 | 24 |
+| 2025-02-28 | 24 |
+| 2025-03-01 | 25 |
+
+`age(2024)` means age on 31 December 2023 by default, giving age 23 in
+this example.
+
+## `pseudo_cpr()`: a serial number instead of the CPR number
+
+Before data leaves a secure environment, derive what the analysis needs and
+replace the CPR number with a serial number:
+
+```{r}
+df <- data.frame(pnr = c("0101004007", "1111111118", "010100-4007"), year = 2025L)
+df |>
+  add_cpr_info(pnr, age(year), sex) |>
+  dplyr::mutate(id = pseudo_cpr(pnr), pnr = NULL)
+```
+
+The same CPR number gets the same serial number, also across formats, so a
+person can still be followed across rows. The numbers are drawn in random
+order: numbering in sorted order would follow the birth date, and in order
+of appearance the row order of the source file.
+
+No key is kept, so two calls give unrelated numbers. To link several
+tables, pseudonymise them in one call or join first. Use `seed` to get the
+same numbering again on exactly the same input:
+
+```{r}
+pseudo_cpr(c("0101004007", "1111111118", "010100-4007"), seed = 1)
+```
+
+A serial number makes the data pseudonymous, not anonymous: birth date,
+sex and other columns can still single out a person.

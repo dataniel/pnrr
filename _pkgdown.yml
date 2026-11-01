@@ -1,0 +1,35 @@
+url: https://dataniel.github.io/pnr
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [intro, reference]
+    right: [github]
+  components:
+    github:
+      icon: fab fa-github
+      href: https://github.com/dataniel/pnr
+
+home:
+  strip_header: true
+
+reference:
+  - title: Diagnose and standardise
+    contents:
+      - diagnose_cpr
+      - clean_cpr
+
+  - title: Derive
+    contents:
+      - add_cpr_info
+      - age
+
+  - title: Pseudonymise
+    contents:
+      - pseudo_cpr
+
+  - title: Package
+    contents:
+      - pnr-package
