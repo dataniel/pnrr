@@ -12,6 +12,8 @@
 #' * [clean_cpr()]: the canonical ten-digit form, for joins and export.
 #' * [add_cpr_info()] with [age()]: birth date, age, sex, modulus 11 and
 #'   validity, in one native pass.
+#' * [cpr_birth_date()], [cpr_age()] and friends: the same information one
+#'   vector at a time, for `mutate()` and `filter()`.
 #' * [pseudo_cpr()]: random serial numbers in place of the CPR number.
 #'
 #' ## Why a package of its own
@@ -24,3 +26,6 @@
 #'
 #' @keywords internal
 "_PACKAGE"
+
+#' @importFrom rlang %||%
+NULL

@@ -4,15 +4,16 @@
 #'
 #' @param data A data frame or tibble.
 #' @param cpr_col CPR column, unquoted or a literal column-name string.
-#' @param ... Information to add: `bday`, `sex`, `valid`, `mod11`, `age`, or
-#'   [pnr::age()] with a reference year or date. Name a selection to choose its
+#' @param ... Information to add: `bday`, `byear`, `sex`, `valid`, `mod11`,
+#'   `age`, or [pnr::age()] with a reference year or date. Name a selection to choose its
 #'   output column, e.g. `birth_date = bday`. With no selections, adds
 #'   `bday`, `age`, `sex`, `mod11`, and `valid`. Bare `age` uses today's date.
 #' @param overwrite Allow replacing existing output columns? Default `FALSE`.
 #'   The CPR source column cannot be replaced.
 #'
 #' @details
-#' `bday` is a Date; `age` is completed calendar years (integer); `sex` is
+#' `bday` is a Date; `byear` is the birth year (integer), not among the
+#' defaults; `age` is completed calendar years (integer); `sex` is
 #' integer 1 for an odd final digit (male), 0 for even (female).
 #' `valid` checks ten digits and a real encoded calendar date, not whether
 #' the number was assigned to a person. Missing and malformed CPRs give
@@ -30,6 +31,11 @@
 #' Pre-cleaning is optional: use [pnr::clean_cpr()] when the source column
 #' itself must be standardised for joins or export.
 #'
+#' For a single piece of information inside `dplyr::mutate()` or
+#' `dplyr::filter()`, the vector functions [pnr::cpr_birth_date()],
+#' [pnr::cpr_age()] and friends give the same values. Prefer
+#' `add_cpr_info()` when you need several: it parses each CPR once.
+#'
 #' For 29 February births, age advances on 1 March in non-leap years.
 #' A reference before birth gives a negative age. Use an explicit reference
 #' for reproducible analysis; today's date changes between runs.
@@ -46,7 +52,7 @@
 #' add_cpr_info(df, pnr,
 #'   primoalder = age(year), ultimoalder = age(year, "ultimo"), sex)
 #' add_cpr_info(df, pnr, alder = age(date = "2025-07-01"))
-#' @seealso [pnr::age()], [pnr::clean_cpr()]
+#' @seealso [pnr::age()], [pnr::clean_cpr()], [pnr::cpr_birth_date()]
 #' @useDynLib pnr, .registration = TRUE, .fixes = "C_"
 #' @export
 add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
@@ -68,10 +74,12 @@ add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
   }
   selections <- rlang::enquos(..., .ignore_empty = "none")
   legacy <- intersect(names(selections), c("add", "ref_date", "year", "at"))
-  types <- c("bday", "age", "sex", "mod11", "valid")
+  # Order matches the codes of the native kernel.
+  types <- c("bday", "age", "sex", "mod11", "valid", "byear")
   if (!length(selections)) {
-    selections <- lapply(types, function(x) rlang::new_quosure(rlang::sym(x)))
-    names(selections) <- rep("", length(types))
+    defaults <- types[1:5]
+    selections <- lapply(defaults, function(x) rlang::new_quosure(rlang::sym(x)))
+    names(selections) <- rep("", length(defaults))
   }
   specs <- lapply(selections, function(q) {
     if (rlang::quo_is_missing(q)) cli::cli_abort("Empty CPR selection. Remove the extra comma or choose an information type.")
@@ -90,7 +98,7 @@ add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
       }
       label <- rlang::as_label(q)
       cli::cli_abort(c("Unknown CPR selection: {.val {label}}.",
-        "i" = 'Choose bday, sex, valid, mod11, age, or age(year, "primo").'))
+        "i" = 'Choose bday, byear, sex, valid, mod11, age, or age(year, "primo").'))
     }
     # Resolve our helper explicitly; capture its arguments in the caller's
     # environment and evaluate references against data only afterwards.
@@ -152,23 +160,36 @@ add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
 #' add_cpr_info(df, pnr, primoalder = age(year, primo = "previous_ultimo"))
 #' @export
 age <- function(year, at = "primo", date, primo = "previous_ultimo") {
-  if (!missing(year) && !missing(date)) cli::cli_abort("Supply only one of year and date in age().")
-  if (missing(year) && !missing(at)) cli::cli_abort("at is only supported with year in age().")
+  year <- if (!missing(year)) rlang::enquo(year)
+  date <- if (!missing(date)) rlang::enquo(date)
+  .age_spec(year, date, at, !missing(at), primo, !missing(primo), "age()")
+}
+
+# Shared by age() and cpr_age(): year and date are quosures or NULL, and
+# fn names the function the user called, for the error messages.
+.age_spec <- function(year, date, at, at_given, primo, primo_given, fn) {
+  if (!is.null(year) && !is.null(date)) cli::cli_abort("Supply only one of year and date in {fn}.")
+  if (is.null(year) && at_given) cli::cli_abort("at is only supported with year in {fn}.")
   at <- rlang::arg_match(at, c("primo", "medio", "ultimo"))
-  if (!missing(primo) && (missing(year) || at != "primo"))
-    cli::cli_abort("primo is only supported with year and at = 'primo' in age().")
+  if (primo_given && (is.null(year) || at != "primo"))
+    cli::cli_abort("primo is only supported with year and at = 'primo' in {fn}.")
   primo <- rlang::arg_match(primo, c("jan1", "previous_ultimo"))
-  use_year <- !missing(year)
-  reference <- if (use_year) rlang::enquo(year) else if (!missing(date)) rlang::enquo(date) else rlang::quo(Sys.Date())
-  structure(list(reference = reference, year = use_year, at = at, primo = primo), class = "pnr_cpr_age")
+  reference <- year %||% date %||% rlang::quo(Sys.Date())
+  structure(list(reference = reference, year = !is.null(year), at = at, primo = primo),
+            class = "pnr_cpr_age")
 }
 
 .cpr_reference <- function(spec, data, output) {
   value <- tryCatch(rlang::eval_tidy(spec$reference, data), error = function(e) {
     cli::cli_abort("Cannot evaluate the age reference for {.var {output}}.", parent = e)
   })
-  if (!length(value) %in% c(1L, nrow(data)) || !is.null(dim(value))) {
-    cli::cli_abort("Reference for {.var {output}} must have length 1 or one value per row ({nrow(data)}).")
+  .cpr_reference_value(spec, value, nrow(data), output)
+}
+
+# Validate an evaluated reference and encode it for the native kernel.
+.cpr_reference_value <- function(spec, value, n, output) {
+  if (!length(value) %in% c(1L, n) || !is.null(dim(value))) {
+    cli::cli_abort("Reference for {.var {output}} must have length 1 or one value per row ({n}).")
   }
   if (spec$year) {
     if (!is.numeric(value) || is.object(value) || any(!is.na(value) &

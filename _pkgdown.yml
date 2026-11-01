@@ -22,9 +22,14 @@ reference:
       - clean_cpr
 
   - title: Derive
+    desc: >
+      `add_cpr_info()` adds several columns in one pass; the `cpr_*()`
+      functions give one vector each, for `mutate()` and `filter()`.
     contents:
       - add_cpr_info
       - age
+      - cpr_birth_date
+      - cpr_age
 
   - title: Pseudonymise
     contents:

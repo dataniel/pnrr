@@ -11,8 +11,8 @@ add_cpr_info(data, cpr_col, ..., overwrite = FALSE)
 
 \item{cpr_col}{CPR column, unquoted or a literal column-name string.}
 
-\item{...}{Information to add: \code{bday}, \code{sex}, \code{valid}, \code{mod11}, \code{age}, or
-\code{\link[=age]{age()}} with a reference year or date. Name a selection to choose its
+\item{...}{Information to add: \code{bday}, \code{byear}, \code{sex}, \code{valid}, \code{mod11},
+\code{age}, or \code{\link[=age]{age()}} with a reference year or date. Name a selection to choose its
 output column, e.g. \code{birth_date = bday}. With no selections, adds
 \code{bday}, \code{age}, \code{sex}, \code{mod11}, and \code{valid}. Bare \code{age} uses today's date.}
 
@@ -26,7 +26,8 @@ The input data frame with selected columns added in selection order.
 Add selected CPR information without changing the original CPR column.
 }
 \details{
-\code{bday} is a Date; \code{age} is completed calendar years (integer); \code{sex} is
+\code{bday} is a Date; \code{byear} is the birth year (integer), not among the
+defaults; \code{age} is completed calendar years (integer); \code{sex} is
 integer 1 for an odd final digit (male), 0 for even (female).
 \code{valid} checks ten digits and a real encoded calendar date, not whether
 the number was assigned to a person. Missing and malformed CPRs give
@@ -43,6 +44,11 @@ CPR parsing, calendar validation, and requested outputs share a single
 native pass. Multiple age selections reuse the decoded birth date.
 Pre-cleaning is optional: use \code{\link[=clean_cpr]{clean_cpr()}} when the source column
 itself must be standardised for joins or export.
+
+For a single piece of information inside \code{dplyr::mutate()} or
+\code{dplyr::filter()}, the vector functions \code{\link[=cpr_birth_date]{cpr_birth_date()}},
+\code{\link[=cpr_age]{cpr_age()}} and friends give the same values. Prefer
+\code{add_cpr_info()} when you need several: it parses each CPR once.
 
 For 29 February births, age advances on 1 March in non-leap years.
 A reference before birth gives a negative age. Use an explicit reference
@@ -61,5 +67,5 @@ add_cpr_info(df, pnr,
 add_cpr_info(df, pnr, alder = age(date = "2025-07-01"))
 }
 \seealso{
-\code{\link[=age]{age()}}, \code{\link[=clean_cpr]{clean_cpr()}}
+\code{\link[=age]{age()}}, \code{\link[=clean_cpr]{clean_cpr()}}, \code{\link[=cpr_birth_date]{cpr_birth_date()}}
 }

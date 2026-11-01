@@ -19,6 +19,8 @@ numbers, never in CPR numbers.
 \item \code{\link[=clean_cpr]{clean_cpr()}}: the canonical ten-digit form, for joins and export.
 \item \code{\link[=add_cpr_info]{add_cpr_info()}} with \code{\link[=age]{age()}}: birth date, age, sex, modulus 11 and
 validity, in one native pass.
+\item \code{\link[=cpr_birth_date]{cpr_birth_date()}}, \code{\link[=cpr_age]{cpr_age()}} and friends: the same information one
+vector at a time, for \code{mutate()} and \code{filter()}.
 \item \code{\link[=pseudo_cpr]{pseudo_cpr()}}: random serial numbers in place of the CPR number.
 }
 }

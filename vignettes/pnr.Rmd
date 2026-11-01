@@ -157,6 +157,36 @@ years and on 1 March in non-leap years. For a birth date of 29 February 2000:
 `age(2024)` means age on 31 December 2023 by default, giving age 23 in
 this example.
 
+Add `byear` for the birth year as an integer; it is not among the defaults.
+
+## `cpr_birth_date()`, `cpr_age()` and friends: one vector at a time
+
+Where a data frame function does not fit, in a `filter()` or inside an
+`ifelse()`, each selection has a vector version:
+
+```{r}
+x <- c("0101004007", "111111-1118", "3102004007")
+cpr_birth_date(x)
+cpr_birth_year(x)
+cpr_sex(x)
+cpr_valid(x)
+cpr_age(x, 2025)
+cpr_age(x, date = "2025-07-01")
+```
+
+They return exactly what the matching `add_cpr_info()` selection does.
+`cpr_age()` takes the same references as `age()`, as values, so inside
+`mutate()` a column works directly:
+
+```{r, eval=FALSE}
+df |>
+  dplyr::filter(cpr_valid(pnr)) |>
+  dplyr::mutate(alder = cpr_age(pnr, year))
+```
+
+Each call parses the CPR numbers again. When you need several columns,
+`add_cpr_info()` parses once for all of them.
+
 ## `pseudo_cpr()`: a serial number instead of the CPR number
 
 Before data leaves a secure environment, derive what the analysis needs and

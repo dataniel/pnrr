@@ -39,4 +39,6 @@ persons |>
 | `clean_cpr()` | Standardise CPR numbers: strip separators, restore Excel-lost leading zeros |
 | `add_cpr_info()` | Add birth date, age, sex, modulus 11 and validity derived from CPR numbers |
 | `age()` | Choose the reference year or date for an age column in `add_cpr_info()` |
+| `cpr_birth_date()`, `cpr_birth_year()`, `cpr_sex()`, `cpr_valid()`, `cpr_mod11()` | One piece of information as a vector, for `mutate()` and `filter()` |
+| `cpr_age()` | Age as a vector, with the same references as `age()` |
 | `pseudo_cpr()` | Replace CPR numbers with serial numbers in random order; no key is kept |

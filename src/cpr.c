@@ -134,7 +134,7 @@ static void read_reference(const Reference *ref, R_xlen_t i, double *year, int *
     *year = y; *md = m*100 + d;
 }
 
-/* codes: 0 bday, 1 age, 2 sex, 3 mod11, 4 valid. One CPR scan per row. */
+/* codes: 0 bday, 1 age, 2 sex, 3 mod11, 4 valid, 5 byear. One CPR scan per row. */
 SEXP pnr_cpr_info(SEXP x, SEXP codes, SEXP references) {
     if (TYPEOF(x) != STRSXP || TYPEOF(codes) != INTSXP || TYPEOF(references) != VECSXP)
         Rf_error("Internal error: invalid CPR arguments.");
@@ -150,15 +150,16 @@ SEXP pnr_cpr_info(SEXP x, SEXP codes, SEXP references) {
     int need_calendar = 0, need_checksum = 0, need_bday = 0;
     for (int j = 0; j < p; ++j) {
         int code = type[j];
-        if (code < 0 || code > 4) Rf_error("Internal error: unknown CPR output.");
+        if (code < 0 || code > 5) Rf_error("Internal error: unknown CPR output.");
         need_calendar |= code != 3; need_checksum |= code == 3; need_bday |= code == 0;
-        SEXP col = PROTECT(Rf_allocVector(code == 0 ? REALSXP : (code >= 3 ? LGLSXP : INTSXP), n));
+        int logical = code == 3 || code == 4;
+        SEXP col = PROTECT(Rf_allocVector(code == 0 ? REALSXP : (logical ? LGLSXP : INTSXP), n));
         if (code == 0) {
             SEXP cls = PROTECT(Rf_mkString("Date"));
             Rf_setAttrib(col, R_ClassSymbol, cls);
             UNPROTECT(1);
             reals[j] = REAL(col);
-        } else ints[j] = code >= 3 ? LOGICAL(col) : INTEGER(col);
+        } else ints[j] = logical ? LOGICAL(col) : INTEGER(col);
         SET_VECTOR_ELT(out, j, col);
         UNPROTECT(1);
         if (code == 1) {
@@ -196,21 +197,22 @@ SEXP pnr_cpr_info(SEXP x, SEXP codes, SEXP references) {
                 checksum = sum % 11 == 0;
             }
         }
+        /* Integer outputs by code; bday (0) and age (1) are handled apart. */
+        int fixed[6];
+        fixed[2] = valid ? scan.digits[9] % 2 : NA_INTEGER;
+        fixed[3] = checksum;
+        fixed[4] = valid;
+        fixed[5] = valid ? y : NA_INTEGER;
         for (int j = 0; j < p; ++j) {
-            switch (type[j]) {
-                case 0: reals[j][i] = bday; break;
-                case 1: {
-                    double ry; int md;
-                    if (refs[j].length == 1) { ry = scalar_year[j]; md = scalar_md[j]; }
-                    else read_reference(&refs[j], i, &ry, &md);
-                    double a = ry - y - (md < m*100 + d);
-                    ints[j][i] = valid && R_FINITE(a) && a > INT_MIN && a <= INT_MAX ? (int)a : NA_INTEGER;
-                    break;
-                }
-                case 2: ints[j][i] = valid ? scan.digits[9] % 2 : NA_INTEGER; break;
-                case 3: ints[j][i] = checksum; break;
-                case 4: ints[j][i] = valid; break;
-            }
+            int code = type[j];
+            if (code == 0) reals[j][i] = bday;
+            else if (code == 1) {
+                double ry; int md;
+                if (refs[j].length == 1) { ry = scalar_year[j]; md = scalar_md[j]; }
+                else read_reference(&refs[j], i, &ry, &md);
+                double a = ry - y - (md < m*100 + d);
+                ints[j][i] = valid && R_FINITE(a) && a > INT_MIN && a <= INT_MAX ? (int)a : NA_INTEGER;
+            } else ints[j][i] = fixed[code];
         }
     }
     UNPROTECT(1);
