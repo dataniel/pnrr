@@ -2,13 +2,13 @@
 #'
 #' Add selected CPR information without changing the original CPR column.
 #'
-#' @param data A data frame or tibble.
-#' @param cpr_col CPR column, unquoted or a literal column-name string.
+#' @param .data A data frame or tibble.
+#' @param .cpr_col CPR column, unquoted or a literal column-name string.
 #' @param ... Information to add: `bday`, `byear`, `sex`, `valid`, `mod11`,
 #'   `age`, or [pnr::age()] with a reference year or date. Name a selection to choose its
 #'   output column, e.g. `birth_date = bday`. With no selections, adds
 #'   `bday`, `age`, `sex`, `mod11`, and `valid`. Bare `age` uses today's date.
-#' @param overwrite Allow replacing existing output columns? Default `FALSE`.
+#' @param .overwrite Allow replacing existing output columns? Default `FALSE`.
 #'   The CPR source column cannot be replaced.
 #'
 #' @details
@@ -23,7 +23,7 @@
 #'
 #' CPR values are cleaned internally with [pnr::clean_cpr()]. To also standardise
 #' the source column, use `dplyr::mutate(pnr = clean_cpr(pnr))` explicitly.
-#' Rows, row order, and input columns are preserved unless `overwrite = TRUE`.
+#' Rows, row order, and input columns are preserved unless `.overwrite = TRUE`.
 #' Duplicate output names are always an error.
 #'
 #' CPR parsing, calendar validation, and requested outputs share a single
@@ -35,6 +35,11 @@
 #' `dplyr::filter()`, the vector functions [pnr::cpr_birth_date()],
 #' [pnr::cpr_age()] and friends give the same values. Prefer
 #' `add_cpr_info()` when you need several: it parses each CPR once.
+#'
+#' The arguments have a dot prefix, as in dplyr, so that an output name
+#' never reaches them: R matches named arguments by partial name before
+#' `...`, and `d = bday` or `cpr = age(year)` would otherwise be taken as
+#' `data` or `cpr_col`.
 #'
 #' For 29 February births, age advances on 1 March in non-leap years.
 #' A reference before birth gives a negative age. Use an explicit reference
@@ -55,17 +60,25 @@
 #' @seealso [pnr::age()], [pnr::clean_cpr()], [pnr::cpr_birth_date()]
 #' @useDynLib pnr, .registration = TRUE, .fixes = "C_"
 #' @export
-add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
-  if (!is.data.frame(data)) cli::cli_abort("{.arg data} must be a data frame or tibble.")
+add_cpr_info <- function(.data, .cpr_col, ..., .overwrite = FALSE) {
+  data <- .data
+  overwrite <- .overwrite
+  if (!is.data.frame(data)) cli::cli_abort("{.arg .data} must be a data frame or tibble.")
   if (anyNA(names(data)) || any(names(data) == "") || anyDuplicated(names(data))) {
-    cli::cli_abort("{.arg data} must have unique, non-empty column names.")
+    cli::cli_abort("{.arg .data} must have unique, non-empty column names.")
   }
   if (!is.logical(overwrite) || length(overwrite) != 1L || is.na(overwrite)) {
-    cli::cli_abort("{.arg overwrite} must be TRUE or FALSE.")
+    cli::cli_abort("{.arg .overwrite} must be TRUE or FALSE.")
   }
-  col <- rlang::enquo(cpr_col)
+  if (missing(.cpr_col)) {
+    if ("cpr_col" %in% names(rlang::enquos(...))) {
+      cli::cli_abort("{.arg cpr_col} is now {.arg .cpr_col} in {.fn add_cpr_info}.")
+    }
+    cli::cli_abort("Name the CPR column in {.arg .cpr_col}, e.g. {.code add_cpr_info(df, pnr)}.")
+  }
+  col <- rlang::enquo(.cpr_col)
   if (!rlang::quo_is_symbol(col) && !rlang::is_string(rlang::quo_get_expr(col))) {
-    cli::cli_abort("{.arg cpr_col} must be an unquoted column name or a single string.")
+    cli::cli_abort("{.arg .cpr_col} must be an unquoted column name or a single string.")
   }
   source <- rlang::as_name(col)
   if (!source %in% names(data)) cli::cli_abort("Column {.var {source}} not found in data.")
@@ -81,7 +94,7 @@ add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
     selections <- lapply(defaults, function(x) rlang::new_quosure(rlang::sym(x)))
     names(selections) <- rep("", length(defaults))
   }
-  specs <- lapply(selections, function(q) {
+  specs <- Map(function(q, name) {
     if (rlang::quo_is_missing(q)) cli::cli_abort("Empty CPR selection. Remove the extra comma or choose an information type.")
     expr <- rlang::quo_get_expr(q)
     if (rlang::is_symbol(expr) && rlang::as_string(expr) %in% types) {
@@ -91,6 +104,10 @@ add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
     is_age <- rlang::is_call(expr, "age") ||
       (is.call(expr) && identical(expr[[1L]], quote(pnr::age)))
     if (!is_age) {
+      if (name %in% c("data", "cpr_col", "overwrite")) {
+        cli::cli_abort(c("{.arg {name}} is now {.arg .{name}} in {.fn add_cpr_info}.",
+          "i" = "The dot keeps output names such as {.code d = bday} from being taken as arguments."))
+      }
       if (length(legacy)) {
         cli::cli_abort(c("The CPR selection API has changed.",
           "i" = 'Use bare selections such as sex and bday, age(year, "primo"), or age(date = reference_date).',
@@ -105,7 +122,7 @@ add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
     expr[[1L]] <- quote(.cpr_age_helper)
     env <- rlang::env(rlang::quo_get_env(q), .cpr_age_helper = age)
     list(type = "age", reference = rlang::eval_bare(expr, env))
-  })
+  }, selections, names(selections))
   output <- names(selections)
   unnamed <- output == ""
   output[unnamed] <- vapply(specs[unnamed], `[[`, character(1), "type")
@@ -117,7 +134,7 @@ add_cpr_info <- function(data, cpr_col, ..., overwrite = FALSE) {
   collisions <- intersect(output, names(data))
   if (length(collisions) && !overwrite) {
     cli::cli_abort(c("Output columns already exist: {.var {collisions}}.",
-      "i" = "Choose different output names or set overwrite = TRUE."))
+      "i" = "Choose different output names or set .overwrite = TRUE."))
   }
   codes <- match(vapply(specs, `[[`, character(1), "type"), types) - 1L
   references <- lapply(seq_along(specs), function(i) {

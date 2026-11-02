@@ -19,6 +19,14 @@
   integer. It is not among the defaults, so default output is unchanged,
   and the native pass is as fast as before.
 
+* `add_cpr_info()`'s arguments are now `.data`, `.cpr_col` and
+  `.overwrite`. An output name such as `d = bday` or `cpr = age(year)` was
+  partially matched to `data` or `cpr_col` and gave a misleading error.
+  The old names give an error that points to the new ones.
+
+* `diagnose_cpr()` classifies in one native pass: about four times faster,
+  one second for five million values.
+
 * `pseudo_cpr()` replaces CPR numbers with serial numbers in random order.
   The same CPR number gets the same serial number within a call; no key is
   kept.

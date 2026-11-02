@@ -69,6 +69,44 @@ test_that("the report shows counts and rows, never CPR numbers", {
   expect_match(paste(clean, collapse = "\n"), "1 of 1 valid")
 })
 
+test_that("the native pass matches the original R classification", {
+  reference <- function(x, as_of) {
+    x <- as.character(x)
+    cleaned <- clean_cpr(x)
+    info <- add_cpr_info(data.frame(pnr = cleaned), pnr, bday, mod11, valid)
+    status <- rep.int("valid", length(x))
+    bad <- which(!info$valid)
+    cb <- cleaned[bad]
+    status[bad] <- ifelse(is.na(cb) | cb == "", "missing",
+      ifelse(grepl("^[0-9]+([.,][0-9]+)?([eE][+]?[0-9]+)?$", cb) & grepl("[.,eE]", cb), "scientific",
+      ifelse(grepl("^[0-9]+$", cb), ifelse(nchar(cb) == 10L, "invalid_date", "wrong_length"),
+      "non_digit")))
+    changed <- which(!is.na(x) & cleaned != x)
+    vr <- which(info$valid)
+    v <- cleaned[vr]
+    oldest <- as.POSIXlt(as_of); oldest$year <- oldest$year - 120L
+    c(lapply(c("valid", "missing", "scientific", "wrong_length", "non_digit", "invalid_date"),
+             function(p) which(status == p)),
+      list(changed[grepl("^[0-9]{9}$", gsub("[- ]", "", x[changed]))],
+           changed[grepl("[- ]", x[changed])],
+           vr[!info$mod11[vr]],
+           vr[duplicated(v) | duplicated(v, fromLast = TRUE)],
+           vr[info$bday[vr] > as_of],
+           vr[info$bday[vr] < as.Date(oldest)]))
+  }
+  set.seed(77)
+  alphabet <- c(0:9, 0:9, 0:9, "-", " ", ".", ",", "e", "E", "+", "x", "æ")
+  random <- replicate(3000, paste0(sample(alphabet, sample(0:13, 1), replace = TRUE), collapse = ""))
+  dates <- format(as.Date("1850-01-01") + sample.int(70000L, 2000L, TRUE), "%d%m%y")
+  plausible <- paste0(dates, sample(c("-", "", " "), 2000L, TRUE),
+                      sprintf("%04d", sample(0:9999, 2000L, TRUE)))
+  x <- c(random, plausible, sub("^0", "", plausible[1:300]), plausible[1:200], NA,
+         "1.11111E+09", "1,5", "1e", "e9", ".5", "1.", "1E+", "1.5e+3", "--1-.-5--")
+  as_of <- as.Date("2020-06-30")
+  d <- diagnose_cpr(x, as_of = as_of)
+  expect_identical(d$checks$rows, reference(x, as_of))
+})
+
 test_that("empty input and bad arguments", {
   d <- diagnose_cpr(character(), as_of = "2025-01-01")
   expect_identical(d$n, 0L)

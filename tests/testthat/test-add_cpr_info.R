@@ -134,16 +134,16 @@ test_that("century boundaries remain correct", {
 test_that("collisions require explicit consent and never rename input columns", {
   df <- data.frame(pnr = "0101004007", age = 99L, year = 2025L)
   expect_error(add_cpr_info(df, pnr, age(year)), "overwrite = TRUE")
-  expect_identical(add_cpr_info(df, pnr, age(year), overwrite = TRUE)$age, 24L)
+  expect_identical(add_cpr_info(df, pnr, age(year), .overwrite = TRUE)$age, 24L)
   expect_identical(df$age, 99L)
   expect_error(add_cpr_info(df, pnr, age(year), age(2026)), "Duplicate output")
   expect_error(add_cpr_info(df, pnr, x = sex, x = bday), "Duplicate output")
-  expect_error(add_cpr_info(df, pnr, pnr = sex, overwrite = TRUE), "source column")
+  expect_error(add_cpr_info(df, pnr, pnr = sex, .overwrite = TRUE), "source column")
   # All calculations see original columns, including columns being overwritten.
-  out <- add_cpr_info(df, pnr, year = age(year), second = age(year), overwrite = TRUE)
+  out <- add_cpr_info(df, pnr, year = age(year), second = age(year), .overwrite = TRUE)
   expect_identical(out$year, 24L)
   expect_identical(out$second, 24L)
-  expect_error(add_cpr_info(df, pnr, sex, overwrite = NA), "TRUE or FALSE")
+  expect_error(add_cpr_info(df, pnr, sex, .overwrite = NA), "TRUE or FALSE")
 })
 
 test_that("invalid selections and old API calls have actionable errors", {
@@ -228,4 +228,19 @@ test_that("native date arithmetic agrees with calendar dates over centuries", {
   expect_error(add_cpr_info(bad, pnr, age(date = "2025-02-29")), "ISO dates")
   empty <- data.frame(pnr = character())
   expect_error(add_cpr_info(empty, pnr, age(date = "2025-02-29")), "ISO dates")
+})
+
+test_that("output names are never taken as arguments", {
+  df <- data.frame(pnr = "0101004007", year = 2025L)
+  out <- add_cpr_info(df, pnr, d = bday, c = sex, cpr = age(year), da = byear, o = valid)
+  expect_named(out, c("pnr", "year", "d", "c", "cpr", "da", "o"))
+  expect_identical(out$cpr, 24L)
+  expect_identical(out$da, 2000L)
+  expect_identical(add_cpr_info(.data = df, .cpr_col = pnr, sex)$sex, 1L)
+})
+
+test_that("the old argument names give a pointer to the new ones", {
+  df <- data.frame(pnr = "0101004007")
+  expect_error(add_cpr_info(df, pnr, sex, overwrite = TRUE), ".overwrite", fixed = TRUE)
+  expect_error(add_cpr_info(df, cpr_col = pnr), ".cpr_col", fixed = TRUE)
 })

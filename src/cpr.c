@@ -15,19 +15,24 @@ typedef struct {
     int valid_format;
     int changed;
     int pad;
+    int sep;        /* contained a space or dash */
+    int count;      /* bytes left after removing spaces and dashes */
+    int all_digits; /* those bytes are all ASCII digits */
 } CprScan;
 
 static CprScan scan_cpr(SEXP string) {
-    CprScan scan = {{0}, 0, 0, 0};
+    CprScan scan = {{0}, 0, 0, 0, 0, 0, 1};
     if (string == NA_STRING) return scan;
     const unsigned char *s = (const unsigned char *) CHAR(string);
     int count = 0, all_digits = 1;
     for (; *s; ++s) {
-        if (*s == ' ' || *s == '-') { scan.changed = 1; continue; }
+        if (*s == ' ' || *s == '-') { scan.changed = scan.sep = 1; continue; }
         if (*s < '0' || *s > '9') all_digits = 0;
         if (count < 10) scan.digits[count] = *s - '0';
         ++count;
     }
+    scan.count = count;
+    scan.all_digits = all_digits;
     if (!all_digits || (count != 9 && count != 10)) return scan;
     if (count == 9) {
         for (int j = 9; j > 0; --j) scan.digits[j] = scan.digits[j - 1];
@@ -82,6 +87,23 @@ static double days_from_civil(int y, int m, int d) {
     int mp = m + (m > 2 ? -3 : 9);
     int doy = (153 * mp + 2) / 5 + d - 1;
     return era * 146097.0 + yoe * 365 + yoe / 4 - yoe / 100 + doy - 719468;
+}
+
+/* Birth date from the first seven digits; the seventh selects the century. */
+static int decode_birth(const int *v, int *y, int *m, int *d) {
+    *d = v[0]*10 + v[1]; *m = v[2]*10 + v[3];
+    int yy = v[4]*10 + v[5], century = 1900;
+    if ((v[6] == 4 || v[6] == 9) && yy <= 36) century = 2000;
+    if (v[6] >= 5 && v[6] <= 8) century = yy <= 57 ? 2000 : 1800;
+    *y = century + yy;
+    return valid_date(*y, *m, *d);
+}
+
+static int mod11(const int *v) {
+    static const int weights[] = {4,3,2,7,6,5,4,3,2,1};
+    int sum = 0;
+    for (int k = 0; k < 10; ++k) sum += v[k] * weights[k];
+    return sum % 11 == 0;
 }
 
 /* Inverse civil-day arithmetic, independent of timezone and strptime. */
@@ -175,27 +197,17 @@ SEXP pnr_cpr_info(SEXP x, SEXP codes, SEXP references) {
             if (refs[j].length == 1) read_reference(&refs[j], 0, &scalar_year[j], &scalar_md[j]);
         }
     }
-    static const int weights[] = {4,3,2,7,6,5,4,3,2,1};
     for (R_xlen_t i = 0; i < n; ++i) {
         if ((i & 65535) == 0) R_CheckUserInterrupt();
         CprScan scan = scan_cpr(STRING_ELT(x, i));
         int valid = 0, y = 0, m = 0, d = 0, checksum = NA_LOGICAL;
         double bday = NA_REAL;
         if (scan.valid_format) {
-            const int *v = scan.digits;
             if (need_calendar) {
-                d = v[0]*10 + v[1]; m = v[2]*10 + v[3];
-                int yy = v[4]*10 + v[5], century = 1900;
-                if ((v[6] == 4 || v[6] == 9) && yy <= 36) century = 2000;
-                if (v[6] >= 5 && v[6] <= 8) century = yy <= 57 ? 2000 : 1800;
-                y = century + yy; valid = valid_date(y, m, d);
+                valid = decode_birth(scan.digits, &y, &m, &d);
                 if (valid && need_bday) bday = days_from_civil(y, m, d);
             }
-            if (need_checksum) {
-                int sum = 0;
-                for (int k = 0; k < 10; ++k) sum += v[k] * weights[k];
-                checksum = sum % 11 == 0;
-            }
+            if (need_checksum) checksum = mod11(scan.digits);
         }
         /* Integer outputs by code; bday (0) and age (1) are handled apart. */
         int fixed[6];
@@ -219,9 +231,115 @@ SEXP pnr_cpr_info(SEXP x, SEXP codes, SEXP references) {
     return out;
 }
 
+/* Matches ^[0-9]+([.,][0-9]+)?([eE][+]?[0-9]+)?$ with at least a decimal
+   part or an exponent, ignoring spaces and dashes as clean_cpr does. */
+static int is_scientific(const unsigned char *s) {
+    /* 0 integer digits, 1 after separator, 2 fraction digits,
+       3 after e, 4 after +, 5 exponent digits */
+    int state = 0, digits = 0;
+    for (; *s; ++s) {
+        unsigned char c = *s;
+        if (c == ' ' || c == '-') continue;
+        int digit = c >= '0' && c <= '9';
+        switch (state) {
+            case 0:
+                if (digit) digits = 1;
+                else if (digits && (c == '.' || c == ',')) state = 1;
+                else if (digits && (c == 'e' || c == 'E')) state = 3;
+                else return 0;
+                break;
+            case 1: if (!digit) return 0; state = 2; break;
+            case 2:
+                if (c == 'e' || c == 'E') state = 3;
+                else if (!digit) return 0;
+                break;
+            case 3:
+                if (c == '+') state = 4;
+                else if (digit) state = 5;
+                else return 0;
+                break;
+            case 4: if (!digit) return 0; state = 5; break;
+            case 5: if (!digit) return 0; break;
+        }
+    }
+    return state == 2 || state == 5;
+}
+
+/* One pass for diagnose_cpr(). Each value gets one status:
+   0 valid, 1 missing, 2 scientific, 3 wrong_length, 4 non_digit,
+   5 invalid_date; and note bits: 1 zero_restored, 2 separators,
+   4 mod11_fails, 8 born after as_of, 16 born before oldest.
+   Returns the row numbers of the 11 checks, a numeric key for valid
+   values (for repeats), the birth date range and the count of males. */
+SEXP pnr_cpr_diagnose(SEXP x, SEXP as_of, SEXP oldest) {
+    if (TYPEOF(x) != STRSXP || TYPEOF(as_of) != REALSXP || TYPEOF(oldest) != REALSXP)
+        Rf_error("Internal error: invalid diagnosis arguments.");
+    R_xlen_t n = XLENGTH(x);
+    if (n > INT_MAX) Rf_error("diagnose_cpr() supports at most %d values.", INT_MAX);
+    double after = REAL(as_of)[0], before = REAL(oldest)[0];
+    unsigned char *status = (unsigned char *) R_alloc(n ? n : 1, 1);
+    unsigned char *notes = (unsigned char *) R_alloc(n ? n : 1, 1);
+    SEXP key = PROTECT(Rf_allocVector(REALSXP, n));
+    double *k = REAL(key);
+    R_xlen_t counts[11] = {0};
+    double first = R_PosInf, last = R_NegInf, male = 0;
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if ((i & 65535) == 0) R_CheckUserInterrupt();
+        SEXP string = STRING_ELT(x, i);
+        CprScan scan = scan_cpr(string);
+        int st, nb = scan.pad | (scan.sep << 1);
+        k[i] = NA_REAL;
+        if (string == NA_STRING || scan.count == 0) st = 1;
+        else if (scan.valid_format) {
+            int y, m, d;
+            if (decode_birth(scan.digits, &y, &m, &d)) {
+                st = 0;
+                double bday = days_from_civil(y, m, d);
+                if (!mod11(scan.digits)) nb |= 4;
+                if (bday > after) nb |= 8;
+                if (bday < before) nb |= 16;
+                if (bday < first) first = bday;
+                if (bday > last) last = bday;
+                male += scan.digits[9] % 2;
+                double value = 0;
+                for (int j = 0; j < 10; ++j) value = value * 10 + scan.digits[j];
+                k[i] = value;
+            } else st = 5;
+        } else if (scan.all_digits) st = 3;
+        else st = is_scientific((const unsigned char *) CHAR(string)) ? 2 : 4;
+        status[i] = (unsigned char) st;
+        notes[i] = (unsigned char) nb;
+        ++counts[st];
+        for (int b = 0; b < 5; ++b) if (nb & (1 << b)) ++counts[6 + b];
+    }
+    SEXP rows = PROTECT(Rf_allocVector(VECSXP, 11));
+    int *fill[11];
+    for (int j = 0; j < 11; ++j) {
+        SET_VECTOR_ELT(rows, j, Rf_allocVector(INTSXP, counts[j]));
+        fill[j] = INTEGER(VECTOR_ELT(rows, j));
+    }
+    for (R_xlen_t i = 0; i < n; ++i) {
+        int row = (int) i + 1;
+        *fill[status[i]]++ = row;
+        int nb = notes[i];
+        if (nb) for (int b = 0; b < 5; ++b) if (nb & (1 << b)) *fill[6 + b]++ = row;
+    }
+    SEXP out = PROTECT(Rf_allocVector(VECSXP, 4));
+    SET_VECTOR_ELT(out, 0, rows);
+    SET_VECTOR_ELT(out, 1, key);
+    SEXP range = Rf_allocVector(REALSXP, 2);
+    SET_VECTOR_ELT(out, 2, range);
+    REAL(range)[0] = counts[0] ? first : NA_REAL;
+    REAL(range)[1] = counts[0] ? last : NA_REAL;
+    SET_VECTOR_ELT(out, 3, Rf_ScalarReal(male));
+    UNPROTECT(3);
+    return out;
+}
+
 static const R_CallMethodDef call_methods[] = {
     {"pnr_clean_cpr", (DL_FUNC) &pnr_clean_cpr, 1},
     {"pnr_cpr_info", (DL_FUNC) &pnr_cpr_info, 3},
+    {"pnr_cpr_diagnose", (DL_FUNC) &pnr_cpr_diagnose, 3},
     {NULL, NULL, 0}
 };
 

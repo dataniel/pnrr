@@ -134,7 +134,7 @@ add_cpr_info(df, pnr, alder = age(date = reference))
 ```
 
 Existing output names cause an error with guidance to rename the selection
-or use `overwrite = TRUE`. Duplicate output names are always an error, and
+or use `.overwrite = TRUE`. Duplicate output names are always an error, and
 the source CPR column cannot be overwritten.
 
 `valid` means ten digits encoding a real calendar date, not confirmation

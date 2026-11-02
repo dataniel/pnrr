@@ -75,57 +75,37 @@ diagnose_cpr <- function(x, as_of = Sys.Date()) {
   }
   as_of <- .as_of_date(as_of)
   if (!is.character(x)) x <- as.character(x)
-  x <- unname(x)
-  n <- length(x)
-  cleaned <- .Call(C_pnr_clean_cpr, x)
-  info <- .Call(C_pnr_cpr_info, cleaned, c(0L, 2L, 3L, 4L), vector("list", 4L))
-  names(info) <- c("bday", "sex", "mod11", "valid")
-  valid <- info$valid
-
-  status <- rep.int("valid", n)
-  bad <- which(!valid)
-  cb <- cleaned[bad]
-  status[bad] <- ifelse(is.na(cb) | cb == "", "missing",
-    ifelse(grepl("^[0-9]+([.,][0-9]+)?([eE][+]?[0-9]+)?$", cb) & grepl("[.,eE]", cb), "scientific",
-    ifelse(grepl("^[0-9]+$", cb), ifelse(nchar(cb) == 10L, "invalid_date", "wrong_length"),
-    "non_digit")))
-  problems <- c("valid", "missing", "scientific", "wrong_length", "non_digit", "invalid_date")
-
-  changed <- which(!is.na(x) & cleaned != x)
-  digits_only <- gsub("[- ]", "", x[changed])
-  zero_restored <- changed[grepl("^[0-9]{9}$", digits_only)]
-  separators <- changed[grepl("[- ]", x[changed])]
-
-  valid_rows <- which(valid)
-  v <- cleaned[valid_rows]
-  repeated <- valid_rows[duplicated(v) | duplicated(v, fromLast = TRUE)]
-  bday <- info$bday[valid_rows]
   oldest <- as.POSIXlt(as_of)
   oldest$year <- oldest$year - 120L
   oldest <- as.Date(oldest)
 
-  notes <- list(
-    zero_restored = zero_restored,
-    separators = separators,
-    mod11_fails = valid_rows[!info$mod11[valid_rows]],
-    repeated = repeated,
-    born_after_as_of = valid_rows[bday > as_of],
-    older_than_120 = valid_rows[bday < oldest]
-  )
-  rows <- c(lapply(problems, function(p) which(status == p)), unname(notes))
+  # One native pass classifies every value and collects the row numbers;
+  # only repeats are found here, from a numeric key of the valid values.
+  res <- .Call(C_pnr_cpr_diagnose, x, as.double(as_of), as.double(oldest))
+  rows <- res[[1L]]
+  valid_rows <- rows[[1L]]
+  v <- res[[2L]][valid_rows]
+  first <- duplicated(v)
+  repeated <- valid_rows[first | duplicated(v, fromLast = TRUE)]
+  rows <- c(rows[1:9], list(repeated), rows[10:11])
+
+  problems <- c("valid", "missing", "scientific", "wrong_length", "non_digit", "invalid_date")
+  notes <- c("zero_restored", "separators", "mod11_fails", "repeated",
+             "born_after_as_of", "older_than_120")
   checks <- data.frame(
-    check = c(problems, names(notes)),
+    check = c(problems, notes),
     kind = rep(c("problem", "note"), c(length(problems), length(notes))),
     n = lengths(rows)
   )
   checks$rows <- rows
 
+  n_valid <- length(valid_rows)
   structure(list(
-    n = n,
+    n = length(x),
     checks = checks,
-    distinct = length(unique(v)),
-    birth_range = if (length(bday)) range(bday) else as.Date(c(NA, NA)),
-    male_share = if (length(valid_rows)) mean(info$sex[valid_rows]) else NA_real_,
+    distinct = n_valid - sum(first),
+    birth_range = as.Date(res[[3L]]),
+    male_share = if (n_valid) res[[4L]] / n_valid else NA_real_,
     as_of = as_of
   ), class = "pnr_diagnosis")
 }

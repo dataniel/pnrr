@@ -4,19 +4,19 @@
 \alias{add_cpr_info}
 \title{Add information derived from Danish CPR numbers}
 \usage{
-add_cpr_info(data, cpr_col, ..., overwrite = FALSE)
+add_cpr_info(.data, .cpr_col, ..., .overwrite = FALSE)
 }
 \arguments{
-\item{data}{A data frame or tibble.}
+\item{.data}{A data frame or tibble.}
 
-\item{cpr_col}{CPR column, unquoted or a literal column-name string.}
+\item{.cpr_col}{CPR column, unquoted or a literal column-name string.}
 
 \item{...}{Information to add: \code{bday}, \code{byear}, \code{sex}, \code{valid}, \code{mod11},
 \code{age}, or \code{\link[=age]{age()}} with a reference year or date. Name a selection to choose its
 output column, e.g. \code{birth_date = bday}. With no selections, adds
 \code{bday}, \code{age}, \code{sex}, \code{mod11}, and \code{valid}. Bare \code{age} uses today's date.}
 
-\item{overwrite}{Allow replacing existing output columns? Default \code{FALSE}.
+\item{.overwrite}{Allow replacing existing output columns? Default \code{FALSE}.
 The CPR source column cannot be replaced.}
 }
 \value{
@@ -37,7 +37,7 @@ Malformed formats give a missing checksum.
 
 CPR values are cleaned internally with \code{\link[=clean_cpr]{clean_cpr()}}. To also standardise
 the source column, use \code{dplyr::mutate(pnr = clean_cpr(pnr))} explicitly.
-Rows, row order, and input columns are preserved unless \code{overwrite = TRUE}.
+Rows, row order, and input columns are preserved unless \code{.overwrite = TRUE}.
 Duplicate output names are always an error.
 
 CPR parsing, calendar validation, and requested outputs share a single
@@ -49,6 +49,11 @@ For a single piece of information inside \code{dplyr::mutate()} or
 \code{dplyr::filter()}, the vector functions \code{\link[=cpr_birth_date]{cpr_birth_date()}},
 \code{\link[=cpr_age]{cpr_age()}} and friends give the same values. Prefer
 \code{add_cpr_info()} when you need several: it parses each CPR once.
+
+The arguments have a dot prefix, as in dplyr, so that an output name
+never reaches them: R matches named arguments by partial name before
+\code{...}, and \code{d = bday} or \code{cpr = age(year)} would otherwise be taken as
+\code{data} or \code{cpr_col}.
 
 For 29 February births, age advances on 1 March in non-leap years.
 A reference before birth gives a negative age. Use an explicit reference
