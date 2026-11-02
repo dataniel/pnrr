@@ -1,8 +1,8 @@
-# Getting started with pnr
+# Getting started with pnrr
 
 A CPR column usually goes through four steps: find out what is wrong
 with it, standardise it, derive what the analysis needs, and replace it
-before the data leaves a secure environment. pnr has one function for
+before the data leaves a secure environment. pnrr has one function for
 each.
 
 All CPR numbers in this vignette are constructed examples.
@@ -66,7 +66,7 @@ numbers that do not satisfy it.
 Identifiers rarely arrive in one consistent shape: `111111-1118`, or a
 nine-digit CPR that lost its leading zero in Excel. Before a join, both
 sides need the same form, and that is all
-[`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md)
+[`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md)
 does. It takes a vector and returns a vector, so the natural place for
 it is inside a `mutate()`:
 
@@ -82,14 +82,14 @@ malformed.
 
 ## `add_cpr_info()`: birth date, age, sex, and validity
 
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 appends selected information while preserving the original CPR column.
 Dashes, spaces, and lost leading zeroes are handled internally, with the
 same native rules as
-[`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md).
+[`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md).
 Each CPR is parsed once for all requested outputs, including multiple
 age calculations. Use
-[`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md)
+[`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md)
 explicitly when the identifier will also be used for joins or export:
 
 ``` r
@@ -100,7 +100,7 @@ df |>
 
 Without selections, the function adds `bday`, `age`, `sex`, `mod11`, and
 `valid`. Bare `age` and
-[`age()`](https://dataniel.github.io/pnr/reference/age.md) use today’s
+[`age()`](https://dataniel.github.io/pnrr/reference/age.md) use today’s
 date; explicit references make analysis reproducible.
 
 ``` r
@@ -232,11 +232,11 @@ cpr_age(x, date = "2025-07-01")
 ```
 
 They return exactly what the matching
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 selection does.
-[`cpr_age()`](https://dataniel.github.io/pnr/reference/cpr_age.md) takes
-the same references as
-[`age()`](https://dataniel.github.io/pnr/reference/age.md), as values,
+[`cpr_age()`](https://dataniel.github.io/pnrr/reference/cpr_age.md)
+takes the same references as
+[`age()`](https://dataniel.github.io/pnrr/reference/age.md), as values,
 so inside `mutate()` a column works directly:
 
 ``` r
@@ -246,7 +246,7 @@ df |>
 ```
 
 Each call parses the CPR numbers again. When you need several columns,
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 parses once for all of them.
 
 ## `pseudo_cpr()`: a serial number instead of the CPR number

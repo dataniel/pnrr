@@ -1,10 +1,10 @@
 # Age from CPR numbers
 
 The vector version of the `age` selection in
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md):
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md):
 CPR numbers in, ages in completed calendar years out. It takes the same
 references as
-[`age()`](https://dataniel.github.io/pnr/reference/age.md), but as
+[`age()`](https://dataniel.github.io/pnrr/reference/age.md), but as
 values rather than column names, so it fits inside
 [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html).
 
@@ -19,7 +19,7 @@ cpr_age(x, year, at = "primo", date, primo = "previous_ultimo")
 - x:
 
   A vector of CPR numbers, cleaned as in
-  [`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md).
+  [`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md).
 
 - year:
 
@@ -29,9 +29,9 @@ cpr_age(x, year, at = "primo", date, primo = "previous_ultimo")
 
 - at, date, primo:
 
-  As in [`age()`](https://dataniel.github.io/pnr/reference/age.md): `at`
-  is `"primo"`, `"medio"` or `"ultimo"`; `date` is a Date vector or ISO
-  date strings instead of `year`; `primo` is the convention for
+  As in [`age()`](https://dataniel.github.io/pnrr/reference/age.md):
+  `at` is `"primo"`, `"medio"` or `"ultimo"`; `date` is a Date vector or
+  ISO date strings instead of `year`; `primo` is the convention for
   `at = "primo"`.
 
 ## Value
@@ -44,20 +44,20 @@ With neither `year` nor `date`, age is today's. Use an explicit
 reference for reproducible analysis. The default `age(year)` convention
 applies: primo is 31 December of the previous year, so opening ages
 equal the previous year's closing ages. See
-[`age()`](https://dataniel.github.io/pnr/reference/age.md) for the
+[`age()`](https://dataniel.github.io/pnrr/reference/age.md) for the
 conventions and
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 for leap-day birthdays.
 
 Ages are `NA` for CPR numbers that are not valid (see
-[`cpr_valid()`](https://dataniel.github.io/pnr/reference/cpr_birth_date.md))
+[`cpr_valid()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md))
 and for missing references.
 
 ## See also
 
-[`age()`](https://dataniel.github.io/pnr/reference/age.md),
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md),
-[`cpr_birth_date()`](https://dataniel.github.io/pnr/reference/cpr_birth_date.md)
+[`age()`](https://dataniel.github.io/pnrr/reference/age.md),
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md),
+[`cpr_birth_date()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
 
 ## Examples
 

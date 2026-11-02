@@ -28,24 +28,24 @@ A character vector of the same length.
 This is standardisation only, not validation. Values that cannot be
 brought to 10 digits are returned cleaned but otherwise untouched, so a
 malformed number stays visibly malformed for downstream checks. Use
-[`diagnose_cpr()`](https://dataniel.github.io/pnr/reference/diagnose_cpr.md)
+[`diagnose_cpr()`](https://dataniel.github.io/pnrr/reference/diagnose_cpr.md)
 to see what is wrong with a column, and
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 for validity per row.
 
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 applies this cleaning internally for its calculations, while preserving
 the original CPR column in its output. Both functions use the same
 native normalisation rules. Cleaning is optional before
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md);
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md);
 use it when you need a standardised identifier for joins or export.
 Already clean character vectors are returned without allocating a
 replacement vector.
 
 ## See also
 
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md),
-[`diagnose_cpr()`](https://dataniel.github.io/pnr/reference/diagnose_cpr.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md),
+[`diagnose_cpr()`](https://dataniel.github.io/pnrr/reference/diagnose_cpr.md)
 
 ## Examples
 

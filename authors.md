@@ -7,16 +7,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/dataniel/pnr/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/dataniel/pnrr/blob/main/DESCRIPTION)
 
-Madsen D (2026). *pnr: Danish CPR Numbers: Cleaning, Derived
+Madsen D (2026). *pnrr: Danish CPR Numbers: Cleaning, Derived
 Information, Diagnosis and Pseudonyms*. R package version 0.1.0,
-<https://dataniel.github.io/pnr>.
+<https://dataniel.github.io/pnrr>.
 
     @Manual{,
-      title = {pnr: Danish CPR Numbers: Cleaning, Derived Information, Diagnosis and Pseudonyms},
+      title = {pnrr: Danish CPR Numbers: Cleaning, Derived Information, Diagnosis and Pseudonyms},
       author = {Daniel Madsen},
       year = {2026},
       note = {R package version 0.1.0},
-      url = {https://dataniel.github.io/pnr},
+      url = {https://dataniel.github.io/pnrr},
     }

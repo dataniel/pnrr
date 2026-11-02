@@ -28,7 +28,7 @@ diagnose_cpr(x, as_of = Sys.Date())
 
 ## Value
 
-A `pnr_diagnosis` object, printed as a short report. It is a list with
+A `pnrr_diagnosis` object, printed as a short report. It is a list with
 `n` (the number of values), `checks` (a data frame with one row per
 check: `check`, `kind` (`"problem"` or `"note"`), `n`, and `rows`, a
 list column of row numbers), `distinct` (the number of distinct valid
@@ -43,9 +43,9 @@ of `x`:
 
 - `valid`: ten digits encoding a real birth date, after the same
   cleaning as
-  [`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md).
+  [`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md).
   Validity is the same as in
-  [`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md).
+  [`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md).
 
 - `missing`: `NA`, or empty once dashes and spaces are removed.
 
@@ -89,8 +89,8 @@ the returned object.
 
 ## See also
 
-[`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md),
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md),
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 
 ## Examples
 

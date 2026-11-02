@@ -3,4 +3,4 @@
 ### All vignettes
 
 - [Getting started with
-  pnr](https://dataniel.github.io/pnr/articles/pnr.md):
+  pnrr](https://dataniel.github.io/pnrr/articles/pnrr.md):

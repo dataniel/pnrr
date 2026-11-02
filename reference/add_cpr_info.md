@@ -21,7 +21,7 @@ add_cpr_info(.data, .cpr_col, ..., .overwrite = FALSE)
 - ...:
 
   Information to add: `bday`, `byear`, `sex`, `valid`, `mod11`, `age`,
-  or [`age()`](https://dataniel.github.io/pnr/reference/age.md) with a
+  or [`age()`](https://dataniel.github.io/pnrr/reference/age.md) with a
   reference year or date. Name a selection to choose its output column,
   e.g. `birth_date = bday`. With no selections, adds `bday`, `age`,
   `sex`, `mod11`, and `valid`. Bare `age` uses today's date.
@@ -47,7 +47,7 @@ checksum, not a requirement for `valid`. Malformed formats give a
 missing checksum.
 
 CPR values are cleaned internally with
-[`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md).
+[`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md).
 To also standardise the source column, use
 `dplyr::mutate(pnr = clean_cpr(pnr))` explicitly. Rows, row order, and
 input columns are preserved unless `.overwrite = TRUE`. Duplicate output
@@ -56,7 +56,7 @@ names are always an error.
 CPR parsing, calendar validation, and requested outputs share a single
 native pass. Multiple age selections reuse the decoded birth date.
 Pre-cleaning is optional: use
-[`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md)
+[`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md)
 when the source column itself must be standardised for joins or export.
 
 For a single piece of information inside
@@ -64,8 +64,8 @@ For a single piece of information inside
 or
 [`dplyr::filter()`](https://dplyr.tidyverse.org/reference/filter.html),
 the vector functions
-[`cpr_birth_date()`](https://dataniel.github.io/pnr/reference/cpr_birth_date.md),
-[`cpr_age()`](https://dataniel.github.io/pnr/reference/cpr_age.md) and
+[`cpr_birth_date()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md),
+[`cpr_age()`](https://dataniel.github.io/pnrr/reference/cpr_age.md) and
 friends give the same values. Prefer `add_cpr_info()` when you need
 several: it parses each CPR once.
 
@@ -84,9 +84,9 @@ instead. Unlike the previous API, the source CPR column is preserved.
 
 ## See also
 
-[`age()`](https://dataniel.github.io/pnr/reference/age.md),
-[`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md),
-[`cpr_birth_date()`](https://dataniel.github.io/pnr/reference/cpr_birth_date.md)
+[`age()`](https://dataniel.github.io/pnrr/reference/age.md),
+[`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md),
+[`cpr_birth_date()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
 
 ## Examples
 

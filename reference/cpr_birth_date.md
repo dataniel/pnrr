@@ -1,7 +1,7 @@
 # Derive one piece of information from CPR numbers
 
 Vector versions of the selections in
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md):
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md):
 a vector of CPR numbers in, one vector of the same length out. They
 belong inside
 [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html),
@@ -28,7 +28,7 @@ cpr_mod11(x)
 - x:
 
   A vector of CPR numbers. Values are read after the same cleaning as
-  [`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md),
+  [`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md),
   so dashes, spaces and a lost leading zero do not matter. Numeric
   vectors and factors are converted with
   [`as.character()`](https://rdrr.io/r/base/character.html).
@@ -40,7 +40,7 @@ A vector of the same length as `x`, without names.
 ## Details
 
 The values are exactly those of the matching selection in
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md),
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md),
 from the same native code:
 
 |                    |           |                                             |
@@ -62,16 +62,16 @@ Birth year is its own function rather than an option of
 
 Each call parses the CPR numbers again. That costs little, about a tenth
 of a second per million values, but when you need several columns,
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 parses once for all of them.
 
 For age, see
-[`cpr_age()`](https://dataniel.github.io/pnr/reference/cpr_age.md).
+[`cpr_age()`](https://dataniel.github.io/pnrr/reference/cpr_age.md).
 
 ## See also
 
-[`cpr_age()`](https://dataniel.github.io/pnr/reference/cpr_age.md),
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`cpr_age()`](https://dataniel.github.io/pnrr/reference/cpr_age.md),
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 
 ## Examples
 

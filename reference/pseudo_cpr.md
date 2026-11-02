@@ -16,7 +16,7 @@ pseudo_cpr(x, seed = NULL)
 - x:
 
   A vector of CPR numbers. Values are matched after the same cleaning as
-  [`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md),
+  [`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md),
   so `"010100-4007"` and `"101004007"` get the same serial number as
   `"0101004007"`.
 
@@ -49,19 +49,19 @@ sets.
 the data anonymous in the sense of the GDPR. Birth date, sex,
 municipality and other columns can still single out a person. Derive
 what you need with
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 before the CPR column is replaced, and remove the original column
 afterwards.
 
 Missing values, and values that are empty after cleaning, stay `NA`.
 Malformed values that are not empty get a serial number like any other
 value; check them first with
-[`diagnose_cpr()`](https://dataniel.github.io/pnr/reference/diagnose_cpr.md).
+[`diagnose_cpr()`](https://dataniel.github.io/pnrr/reference/diagnose_cpr.md).
 
 ## See also
 
-[`diagnose_cpr()`](https://dataniel.github.io/pnr/reference/diagnose_cpr.md),
-[`clean_cpr()`](https://dataniel.github.io/pnr/reference/clean_cpr.md)
+[`diagnose_cpr()`](https://dataniel.github.io/pnrr/reference/diagnose_cpr.md),
+[`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md)
 
 ## Examples
 

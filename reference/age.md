@@ -1,7 +1,7 @@
 # Specify an age calculation for CPR information
 
 Use inside
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md)
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 to choose the reference for an age column. This helper describes a
 calculation; it does not calculate an age itself.
 
@@ -38,7 +38,7 @@ age(year, at = "primo", date, primo = "previous_ultimo")
 ## Value
 
 An age specification for
-[`add_cpr_info()`](https://dataniel.github.io/pnr/reference/add_cpr_info.md).
+[`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md).
 
 ## Details
 
