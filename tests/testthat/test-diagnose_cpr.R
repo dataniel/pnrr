@@ -6,7 +6,7 @@ test_that("every value gets exactly one problem status", {
          "3102004007", "12345", "ukendt", NA, "1111111118", "", " - ",
          "1111111118.0", "12345678901")
   d <- diagnose_cpr(x, as_of = "2025-01-01")
-  expect_s3_class(d, "pnr_diagnosis")
+  expect_s3_class(d, "pnrr_diagnosis")
   problems <- d$checks[d$checks$kind == "problem", ]
   expect_identical(sum(problems$n), length(x))
   expect_identical(sort(unlist(problems$rows)), seq_along(x))

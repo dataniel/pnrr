@@ -1,8 +1,8 @@
-# pnr 0.1.0
+# pnrr 0.1.0
 
 * First version. `clean_cpr()`, `add_cpr_info()` and `age()` moved here
   unchanged from daos, with their native C kernel, tests and benchmarks.
-  daos no longer has them and does not forward to pnr.
+  daos no longer has them and does not forward to pnrr.
 
 * `diagnose_cpr()` reports what is wrong with a CPR column: missing values,
   scientific notation, wrong lengths, other characters and invalid dates,

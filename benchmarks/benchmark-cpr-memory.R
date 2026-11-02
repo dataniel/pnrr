@@ -13,7 +13,7 @@ cases <- list(
 rows <- list()
 for (case in names(cases)) {
   for (impl in c("before", "after")) {
-    api <- if (impl == "before") baseline else asNamespace("pnr")
+    api <- if (impl == "before") baseline else asNamespace("pnrr")
     f <- cases[[case]]
     invisible(f(api))
     gc()

@@ -9,10 +9,10 @@
 #' This is standardisation only, not validation. Values that cannot be
 #' brought to 10 digits are returned cleaned but otherwise untouched, so a
 #' malformed number stays visibly malformed for downstream checks. Use
-#' [pnr::diagnose_cpr()] to see what is wrong with a column, and
-#' [pnr::add_cpr_info()] for validity per row.
+#' [pnrr::diagnose_cpr()] to see what is wrong with a column, and
+#' [pnrr::add_cpr_info()] for validity per row.
 #'
-#' [pnr::add_cpr_info()] applies this cleaning internally for its
+#' [pnrr::add_cpr_info()] applies this cleaning internally for its
 #' calculations, while preserving the original CPR column in its output.
 #' Both functions use the same native normalisation rules. Cleaning is
 #' optional before `add_cpr_info()`; use it when you need a standardised
@@ -30,10 +30,10 @@
 #' # Typical use: standardise the join key on both sides
 #' # df  |> dplyr::mutate(pnr = clean_cpr(pnr))
 #'
-#' @seealso [pnr::add_cpr_info()], [pnr::diagnose_cpr()]
+#' @seealso [pnrr::add_cpr_info()], [pnrr::diagnose_cpr()]
 #'
 #' @export
 clean_cpr <- function(x) {
   if (!is.character(x)) x <- as.character(x)
-  .Call(C_pnr_clean_cpr, x)
+  .Call(C_pnrr_clean_cpr, x)
 }

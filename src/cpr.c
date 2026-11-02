@@ -43,7 +43,7 @@ static CprScan scan_cpr(SEXP string) {
     return scan;
 }
 
-SEXP pnr_clean_cpr(SEXP x) {
+SEXP pnrr_clean_cpr(SEXP x) {
     if (TYPEOF(x) != STRSXP) Rf_error("Internal error: CPR input must be character.");
     R_xlen_t n = XLENGTH(x);
     SEXP out = x;
@@ -157,7 +157,7 @@ static void read_reference(const Reference *ref, R_xlen_t i, double *year, int *
 }
 
 /* codes: 0 bday, 1 age, 2 sex, 3 mod11, 4 valid, 5 byear. One CPR scan per row. */
-SEXP pnr_cpr_info(SEXP x, SEXP codes, SEXP references) {
+SEXP pnrr_cpr_info(SEXP x, SEXP codes, SEXP references) {
     if (TYPEOF(x) != STRSXP || TYPEOF(codes) != INTSXP || TYPEOF(references) != VECSXP)
         Rf_error("Internal error: invalid CPR arguments.");
     R_xlen_t n = XLENGTH(x);
@@ -271,7 +271,7 @@ static int is_scientific(const unsigned char *s) {
    4 mod11_fails, 8 born after as_of, 16 born before oldest.
    Returns the row numbers of the 11 checks, a numeric key for valid
    values (for repeats), the birth date range and the count of males. */
-SEXP pnr_cpr_diagnose(SEXP x, SEXP as_of, SEXP oldest) {
+SEXP pnrr_cpr_diagnose(SEXP x, SEXP as_of, SEXP oldest) {
     if (TYPEOF(x) != STRSXP || TYPEOF(as_of) != REALSXP || TYPEOF(oldest) != REALSXP)
         Rf_error("Internal error: invalid diagnosis arguments.");
     R_xlen_t n = XLENGTH(x);
@@ -337,13 +337,13 @@ SEXP pnr_cpr_diagnose(SEXP x, SEXP as_of, SEXP oldest) {
 }
 
 static const R_CallMethodDef call_methods[] = {
-    {"pnr_clean_cpr", (DL_FUNC) &pnr_clean_cpr, 1},
-    {"pnr_cpr_info", (DL_FUNC) &pnr_cpr_info, 3},
-    {"pnr_cpr_diagnose", (DL_FUNC) &pnr_cpr_diagnose, 3},
+    {"pnrr_clean_cpr", (DL_FUNC) &pnrr_clean_cpr, 1},
+    {"pnrr_cpr_info", (DL_FUNC) &pnrr_cpr_info, 3},
+    {"pnrr_cpr_diagnose", (DL_FUNC) &pnrr_cpr_diagnose, 3},
     {NULL, NULL, 0}
 };
 
-void attribute_visible R_init_pnr(DllInfo *dll) {
+void attribute_visible R_init_pnrr(DllInfo *dll) {
     R_registerRoutines(dll, NULL, call_methods, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
     R_forceSymbols(dll, TRUE);

@@ -1,17 +1,17 @@
 #' Derive one piece of information from CPR numbers
 #'
-#' Vector versions of the selections in [pnr::add_cpr_info()]: a vector of
+#' Vector versions of the selections in [pnrr::add_cpr_info()]: a vector of
 #' CPR numbers in, one vector of the same length out. They belong inside
 #' `dplyr::mutate()`, `dplyr::filter()` or `ifelse()`, where a data frame
 #' function does not fit.
 #'
 #' @param x A vector of CPR numbers. Values are read after the same cleaning
-#'   as [pnr::clean_cpr()], so dashes, spaces and a lost leading zero do not
+#'   as [pnrr::clean_cpr()], so dashes, spaces and a lost leading zero do not
 #'   matter. Numeric vectors and factors are converted with `as.character()`.
 #'
 #' @details
 #' The values are exactly those of the matching selection in
-#' [pnr::add_cpr_info()], from the same native code:
+#' [pnrr::add_cpr_info()], from the same native code:
 #'
 #' | Function | Selection | Type |
 #' | --- | --- | --- |
@@ -31,9 +31,9 @@
 #'
 #' Each call parses the CPR numbers again. That costs little, about a tenth
 #' of a second per million values, but when you need several columns,
-#' [pnr::add_cpr_info()] parses once for all of them.
+#' [pnrr::add_cpr_info()] parses once for all of them.
 #'
-#' For age, see [pnr::cpr_age()].
+#' For age, see [pnrr::cpr_age()].
 #'
 #' @return A vector of the same length as `x`, without names.
 #'
@@ -50,7 +50,7 @@
 #' #   dplyr::filter(cpr_valid(pnr)) |>
 #' #   dplyr::mutate(koen = ifelse(cpr_sex(pnr) == 1L, "Mand", "Kvinde"))
 #'
-#' @seealso [pnr::cpr_age()], [pnr::add_cpr_info()]
+#' @seealso [pnrr::cpr_age()], [pnrr::add_cpr_info()]
 #' @name cpr_birth_date
 NULL
 
@@ -76,15 +76,15 @@ cpr_mod11 <- function(x) .cpr_one(x, 3L, "cpr_mod11()")
 
 #' Age from CPR numbers
 #'
-#' The vector version of the `age` selection in [pnr::add_cpr_info()]: CPR
+#' The vector version of the `age` selection in [pnrr::add_cpr_info()]: CPR
 #' numbers in, ages in completed calendar years out. It takes the same
-#' references as [pnr::age()], but as values rather than column names, so
+#' references as [pnrr::age()], but as values rather than column names, so
 #' it fits inside `dplyr::mutate()`.
 #'
-#' @param x A vector of CPR numbers, cleaned as in [pnr::clean_cpr()].
+#' @param x A vector of CPR numbers, cleaned as in [pnrr::clean_cpr()].
 #' @param year Numeric whole year(s): one for all, or one per CPR number.
 #'   Inside `dplyr::mutate()` this can be a column, e.g. `cpr_age(pnr, year)`.
-#' @param at,date,primo As in [pnr::age()]: `at` is `"primo"`, `"medio"` or
+#' @param at,date,primo As in [pnrr::age()]: `at` is `"primo"`, `"medio"` or
 #'   `"ultimo"`; `date` is a Date vector or ISO date strings instead of
 #'   `year`; `primo` is the convention for `at = "primo"`.
 #'
@@ -92,10 +92,10 @@ cpr_mod11 <- function(x) .cpr_one(x, 3L, "cpr_mod11()")
 #' With neither `year` nor `date`, age is today's. Use an explicit reference
 #' for reproducible analysis. The default `age(year)` convention applies:
 #' primo is 31 December of the previous year, so opening ages equal the
-#' previous year's closing ages. See [pnr::age()] for the conventions and
-#' [pnr::add_cpr_info()] for leap-day birthdays.
+#' previous year's closing ages. See [pnrr::age()] for the conventions and
+#' [pnrr::add_cpr_info()] for leap-day birthdays.
 #'
-#' Ages are `NA` for CPR numbers that are not valid (see [pnr::cpr_valid()])
+#' Ages are `NA` for CPR numbers that are not valid (see [pnrr::cpr_valid()])
 #' and for missing references.
 #'
 #' @return An integer vector of the same length as `x`.
@@ -109,7 +109,7 @@ cpr_mod11 <- function(x) .cpr_one(x, 3L, "cpr_mod11()")
 #'
 #' # df |> dplyr::mutate(alder = cpr_age(pnr, year))
 #'
-#' @seealso [pnr::age()], [pnr::add_cpr_info()], [pnr::cpr_birth_date()]
+#' @seealso [pnrr::age()], [pnrr::add_cpr_info()], [pnrr::cpr_birth_date()]
 #' @export
 cpr_age <- function(x, year, at = "primo", date, primo = "previous_ultimo") {
   x <- .cpr_input(x, "cpr_age()")
@@ -118,12 +118,12 @@ cpr_age <- function(x, year, at = "primo", date, primo = "previous_ultimo") {
   date <- if (!missing(date)) rlang::quo(!!date)
   spec <- .age_spec(year, date, at, !missing(at), primo, !missing(primo), "cpr_age()")
   reference <- .cpr_reference_value(spec, rlang::eval_tidy(spec$reference), length(x), "cpr_age()")
-  .Call(C_pnr_cpr_info, x, 1L, list(reference))[[1L]]
+  .Call(C_pnrr_cpr_info, x, 1L, list(reference))[[1L]]
 }
 
 .cpr_one <- function(x, code, fn) {
   x <- .cpr_input(x, fn)
-  .Call(C_pnr_cpr_info, x, code, list(NULL))[[1L]]
+  .Call(C_pnrr_cpr_info, x, code, list(NULL))[[1L]]
 }
 
 .cpr_input <- function(x, fn) {

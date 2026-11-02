@@ -1,4 +1,4 @@
-# Run from the pnr root:
+# Run from the pnrr root:
 # Rscript benchmarks/benchmark-statgs.R path/to/statgs/R/pnr.R statgs_commit
 # The private statgs source is deliberately not copied into this repository.
 args <- commandArgs(trailingOnly = TRUE)
@@ -88,7 +88,7 @@ print(data.frame(date = "2026-01-01",
                  daos = add_cpr_info(edge, pnr, age(date = "2026-01-01"))$age,
                  statgs = statgs$age(edge$pnr, date = "2026-01-01")))
 writeLines(c(paste("statgs commit:", args[2L]),
-             paste("pnr commit (benchmark originally run in daos):", system("git rev-parse HEAD", intern = TRUE)),
+             paste("pnrr commit (benchmark originally run in daos):", system("git rev-parse HEAD", intern = TRUE)),
              "Synthetic valid-format CPRs; 3 timed repetitions after warmup.",
              "Each daos repetition averages 50 calls to avoid timer resolution issues.",
              "Row dates precomputed for both; year case uses daos year shortcut.",

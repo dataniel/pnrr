@@ -199,7 +199,7 @@ test_that("empty frames, tibble grouping, and data tables retain structure", {
 
 test_that("qualified age helper and tidy injection work", {
   df <- data.frame(pnr = "0101004007", year = 2025L)
-  expect_identical(add_cpr_info(df, pnr, pnr::age(year))$age, 24L)
+  expect_identical(add_cpr_info(df, pnr, pnrr::age(year))$age, 24L)
   selections <- rlang::quos(alder = age(year), sex)
   expect_named(add_cpr_info(df, pnr, !!!selections), c("pnr", "year", "alder", "sex"))
 })

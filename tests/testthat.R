@@ -1,4 +1,4 @@
 library(testthat)
-library(pnr)
+library(pnrr)
 
-test_check("pnr")
+test_check("pnrr")

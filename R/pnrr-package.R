@@ -1,9 +1,9 @@
-#' pnr: Danish CPR numbers in register data
+#' pnrr: Danish CPR numbers in register data
 #'
 #' The CPR number (personnummer) is the key of almost every Danish register,
 #' and it arrives in every shape: with and without a dash, with the leading
-#' zero lost in Excel, as a number in scientific notation. pnr holds the
-#' functions that work on it. See `vignette("pnr")`.
+#' zero lost in Excel, as a number in scientific notation. pnrr holds the
+#' functions that work on it. See `vignette("pnrr")`.
 #'
 #' ## Where to start
 #'
@@ -21,7 +21,7 @@
 #' `clean_cpr()`, `add_cpr_info()` and `age()` started in the daos package.
 #' They moved here, unchanged, when the CPR work grew beyond deriving
 #' columns: diagnosing a column and replacing the identifier belong with
-#' them and not with the general utilities in daos. pnr depends only on cli
+#' them and not with the general utilities in daos. pnrr depends only on cli
 #' and rlang, and daos does not depend on it, or it on daos.
 #'
 #' @keywords internal

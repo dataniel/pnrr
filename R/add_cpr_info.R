@@ -5,7 +5,7 @@
 #' @param .data A data frame or tibble.
 #' @param .cpr_col CPR column, unquoted or a literal column-name string.
 #' @param ... Information to add: `bday`, `byear`, `sex`, `valid`, `mod11`,
-#'   `age`, or [pnr::age()] with a reference year or date. Name a selection to choose its
+#'   `age`, or [pnrr::age()] with a reference year or date. Name a selection to choose its
 #'   output column, e.g. `birth_date = bday`. With no selections, adds
 #'   `bday`, `age`, `sex`, `mod11`, and `valid`. Bare `age` uses today's date.
 #' @param .overwrite Allow replacing existing output columns? Default `FALSE`.
@@ -21,19 +21,19 @@
 #' `mod11` is a separate logical checksum, not a requirement for `valid`.
 #' Malformed formats give a missing checksum.
 #'
-#' CPR values are cleaned internally with [pnr::clean_cpr()]. To also standardise
+#' CPR values are cleaned internally with [pnrr::clean_cpr()]. To also standardise
 #' the source column, use `dplyr::mutate(pnr = clean_cpr(pnr))` explicitly.
 #' Rows, row order, and input columns are preserved unless `.overwrite = TRUE`.
 #' Duplicate output names are always an error.
 #'
 #' CPR parsing, calendar validation, and requested outputs share a single
 #' native pass. Multiple age selections reuse the decoded birth date.
-#' Pre-cleaning is optional: use [pnr::clean_cpr()] when the source column
+#' Pre-cleaning is optional: use [pnrr::clean_cpr()] when the source column
 #' itself must be standardised for joins or export.
 #'
 #' For a single piece of information inside `dplyr::mutate()` or
-#' `dplyr::filter()`, the vector functions [pnr::cpr_birth_date()],
-#' [pnr::cpr_age()] and friends give the same values. Prefer
+#' `dplyr::filter()`, the vector functions [pnrr::cpr_birth_date()],
+#' [pnrr::cpr_age()] and friends give the same values. Prefer
 #' `add_cpr_info()` when you need several: it parses each CPR once.
 #'
 #' The arguments have a dot prefix, as in dplyr, so that an output name
@@ -57,8 +57,8 @@
 #' add_cpr_info(df, pnr,
 #'   primoalder = age(year), ultimoalder = age(year, "ultimo"), sex)
 #' add_cpr_info(df, pnr, alder = age(date = "2025-07-01"))
-#' @seealso [pnr::age()], [pnr::clean_cpr()], [pnr::cpr_birth_date()]
-#' @useDynLib pnr, .registration = TRUE, .fixes = "C_"
+#' @seealso [pnrr::age()], [pnrr::clean_cpr()], [pnrr::cpr_birth_date()]
+#' @useDynLib pnrr, .registration = TRUE, .fixes = "C_"
 #' @export
 add_cpr_info <- function(.data, .cpr_col, ..., .overwrite = FALSE) {
   data <- .data
@@ -102,7 +102,7 @@ add_cpr_info <- function(.data, .cpr_col, ..., .overwrite = FALSE) {
       return(list(type = type, reference = if (type == "age") age() else NULL))
     }
     is_age <- rlang::is_call(expr, "age") ||
-      (is.call(expr) && identical(expr[[1L]], quote(pnr::age)))
+      (is.call(expr) && identical(expr[[1L]], quote(pnrr::age)))
     if (!is_age) {
       if (name %in% c("data", "cpr_col", "overwrite")) {
         cli::cli_abort(c("{.arg {name}} is now {.arg .{name}} in {.fn add_cpr_info}.",
@@ -142,7 +142,7 @@ add_cpr_info <- function(.data, .cpr_col, ..., .overwrite = FALSE) {
   })
   cpr <- data[[source]]
   if (!is.character(cpr)) cpr <- as.character(cpr)
-  values <- .Call(C_pnr_cpr_info, cpr, codes, references)
+  values <- .Call(C_pnrr_cpr_info, cpr, codes, references)
   # Compute against the original data, before any output is assigned.
   result <- if (inherits(data, "data.table")) data.table::copy(data) else data
   for (i in seq_along(output)) result[[output[i]]] <- values[[i]]
@@ -151,7 +151,7 @@ add_cpr_info <- function(.data, .cpr_col, ..., .overwrite = FALSE) {
 
 #' Specify an age calculation for CPR information
 #'
-#' Use inside [pnr::add_cpr_info()] to choose the reference for an age column.
+#' Use inside [pnrr::add_cpr_info()] to choose the reference for an age column.
 #' This helper describes a calculation; it does not calculate an age itself.
 #' @param year Numeric whole year(s), directly or as a column/expression in
 #'   the input data. Defaults to 31 December of the previous year.
@@ -169,7 +169,7 @@ add_cpr_info <- function(.data, .cpr_col, ..., .overwrite = FALSE) {
 #' closing ages, use `age(year, primo = "previous_ultimo")`. This is equivalent
 #' to `age(year - 1L, "ultimo")` and excludes birthdays on 1 January of `year`.
 #' It changes the age reference only, not membership of the population.
-#' @return An age specification for [pnr::add_cpr_info()].
+#' @return An age specification for [pnrr::add_cpr_info()].
 #' @examples
 #' df <- data.frame(pnr = "0101004007", year = 2025L)
 #' add_cpr_info(df, pnr, age(year), sex)
@@ -193,7 +193,7 @@ age <- function(year, at = "primo", date, primo = "previous_ultimo") {
   primo <- rlang::arg_match(primo, c("jan1", "previous_ultimo"))
   reference <- year %||% date %||% rlang::quo(Sys.Date())
   structure(list(reference = reference, year = !is.null(year), at = at, primo = primo),
-            class = "pnr_cpr_age")
+            class = "pnrr_cpr_age")
 }
 
 .cpr_reference <- function(spec, data, output) {

@@ -1,6 +1,6 @@
-# pnr
+# pnrr
 
-[![R-CMD-check](https://github.com/dataniel/pnr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dataniel/pnr/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/dataniel/pnrr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/dataniel/pnrr/actions/workflows/R-CMD-check.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
@@ -9,19 +9,19 @@ standardise it, derive birth date, age and sex, and replace it with a
 serial number before the data leaves a secure environment.
 
 `clean_cpr()`, `add_cpr_info()` and `age()` moved here unchanged from
-[daos](https://github.com/dataniel/daos). pnr depends only on cli and
+[daos](https://github.com/dataniel/daos). pnrr depends only on cli and
 rlang; the CPR parsing is native C.
 
 ## Installation
 
 ```r
-pak::pak("dataniel/pnr")
+pak::pak("dataniel/pnrr")
 ```
 
 ## What it looks like
 
 ```r
-library(pnr)
+library(pnrr)
 
 diagnose_cpr(persons$pnr, as_of = "2025-12-31")
 

@@ -45,7 +45,7 @@ for (n in sizes) {
   )
   for (case in names(cases)) {
     f <- cases[[case]]
-    current <- asNamespace("pnr")
+    current <- asNamespace("pnrr")
     stopifnot(identical(f(baseline), f(current)))
     times <- matrix(NA_real_, 3L, 2L)
     for (rep in 1:3) {

@@ -1,8 +1,8 @@
 ---
-title: "Getting started with pnr"
+title: "Getting started with pnrr"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting started with pnr}
+  %\VignetteIndexEntry{Getting started with pnrr}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,12 +12,12 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment  = "#>"
 )
-library(pnr)
+library(pnrr)
 ```
 
 A CPR column usually goes through four steps: find out what is wrong with
 it, standardise it, derive what the analysis needs, and replace it before
-the data leaves a secure environment. pnr has one function for each.
+the data leaves a secure environment. pnrr has one function for each.
 
 All CPR numbers in this vignette are constructed examples.
 

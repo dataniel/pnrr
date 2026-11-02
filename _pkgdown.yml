@@ -1,4 +1,4 @@
-url: https://dataniel.github.io/pnr
+url: https://dataniel.github.io/pnrr
 
 template:
   bootstrap: 5
@@ -10,7 +10,7 @@ navbar:
   components:
     github:
       icon: fab fa-github
-      href: https://github.com/dataniel/pnr
+      href: https://github.com/dataniel/pnrr
 
 home:
   strip_header: true
@@ -37,4 +37,4 @@ reference:
 
   - title: Package
     contents:
-      - pnr-package
+      - pnrr-package

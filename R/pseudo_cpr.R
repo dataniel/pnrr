@@ -6,7 +6,7 @@
 #' across rows, but the number itself carries nothing about the person.
 #'
 #' @param x A vector of CPR numbers. Values are matched after the same
-#'   cleaning as [pnr::clean_cpr()], so `"010100-4007"` and `"101004007"`
+#'   cleaning as [pnrr::clean_cpr()], so `"010100-4007"` and `"101004007"`
 #'   get the same serial number as `"0101004007"`.
 #' @param seed Optional single whole number. With a seed, the same input
 #'   gives the same serial numbers on every run; the global random number
@@ -28,12 +28,12 @@
 #' **Pseudonymous, not anonymous.** Replacing the identifier does not make
 #' the data anonymous in the sense of the GDPR. Birth date, sex,
 #' municipality and other columns can still single out a person. Derive
-#' what you need with [pnr::add_cpr_info()] before the CPR column is
+#' what you need with [pnrr::add_cpr_info()] before the CPR column is
 #' replaced, and remove the original column afterwards.
 #'
 #' Missing values, and values that are empty after cleaning, stay `NA`.
 #' Malformed values that are not empty get a serial number like any other
-#' value; check them first with [pnr::diagnose_cpr()].
+#' value; check them first with [pnrr::diagnose_cpr()].
 #'
 #' @return An integer vector of the same length as `x`.
 #'
@@ -47,7 +47,7 @@
 #' #   add_cpr_info(pnr, bday, sex) |>
 #' #   dplyr::mutate(id = pseudo_cpr(pnr), pnr = NULL)
 #'
-#' @seealso [pnr::diagnose_cpr()], [pnr::clean_cpr()]
+#' @seealso [pnrr::diagnose_cpr()], [pnrr::clean_cpr()]
 #' @export
 pseudo_cpr <- function(x, seed = NULL) {
   if (!is.atomic(x) || !is.null(dim(x))) {
@@ -58,7 +58,7 @@ pseudo_cpr <- function(x, seed = NULL) {
     cli::cli_abort("{.arg seed} must be NULL or a single whole number.")
   }
   if (!is.character(x)) x <- as.character(x)
-  x <- .Call(C_pnr_clean_cpr, unname(x))
+  x <- .Call(C_pnrr_clean_cpr, unname(x))
   x[!is.na(x) & x == ""] <- NA_character_
   keys <- unique(x[!is.na(x)])
   serial <- if (is.null(seed)) sample.int(length(keys)) else .with_seed(seed, sample.int(length(keys)))

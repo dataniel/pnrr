@@ -15,7 +15,7 @@ Numeric vectors and factors are converted with \code{as.character()} first.}
 are flagged. Defaults to today.}
 }
 \value{
-A \code{pnr_diagnosis} object, printed as a short report. It is a list
+A \code{pnrr_diagnosis} object, printed as a short report. It is a list
 with \code{n} (the number of values), \code{checks} (a data frame with one row per
 check: \code{check}, \code{kind} (\code{"problem"} or \code{"note"}), \code{n}, and \code{rows}, a list
 column of row numbers), \code{distinct} (the number of distinct valid

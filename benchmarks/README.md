@@ -2,10 +2,10 @@
 
 These benchmarks were run while the CPR functions lived in daos, and moved
 here with them unchanged. "daos" in the results and in `benchmark-statgs.R`
-means the same code that is now in pnr. `baseline-cpr-ux.R` is a frozen
+means the same code that is now in pnrr. `baseline-cpr-ux.R` is a frozen
 snapshot of the older daos implementation and is kept as it was.
-`benchmark-cpr.R` and `benchmark-cpr-memory.R` now load pnr; run them from
-the pnr root.
+`benchmark-cpr.R` and `benchmark-cpr-memory.R` now load pnrr; run them from
+the pnrr root.
 
 ## daos versus statgs
 

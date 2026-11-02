@@ -17,8 +17,8 @@
 #' of `x`:
 #'
 #' * `valid`: ten digits encoding a real birth date, after the same
-#'   cleaning as [pnr::clean_cpr()]. Validity is the same as in
-#'   [pnr::add_cpr_info()].
+#'   cleaning as [pnrr::clean_cpr()]. Validity is the same as in
+#'   [pnrr::add_cpr_info()].
 #' * `missing`: `NA`, or empty once dashes and spaces are removed.
 #' * `scientific`: written in scientific notation, such as `"1.11111E+09"`.
 #'   Excel and some exports do this to long numbers. The trailing digits are
@@ -50,7 +50,7 @@
 #' its output can go into a log. The row numbers of every check are kept in
 #' the returned object.
 #'
-#' @return A `pnr_diagnosis` object, printed as a short report. It is a list
+#' @return A `pnrr_diagnosis` object, printed as a short report. It is a list
 #'   with `n` (the number of values), `checks` (a data frame with one row per
 #'   check: `check`, `kind` (`"problem"` or `"note"`), `n`, and `rows`, a list
 #'   column of row numbers), `distinct` (the number of distinct valid
@@ -67,7 +67,7 @@
 #' d <- diagnose_cpr(x, as_of = "2025-01-01")
 #' d$checks$rows[d$checks$check == "scientific"][[1]]
 #'
-#' @seealso [pnr::clean_cpr()], [pnr::add_cpr_info()]
+#' @seealso [pnrr::clean_cpr()], [pnrr::add_cpr_info()]
 #' @export
 diagnose_cpr <- function(x, as_of = Sys.Date()) {
   if (!is.atomic(x) || !is.null(dim(x))) {
@@ -81,7 +81,7 @@ diagnose_cpr <- function(x, as_of = Sys.Date()) {
 
   # One native pass classifies every value and collects the row numbers;
   # only repeats are found here, from a numeric key of the valid values.
-  res <- .Call(C_pnr_cpr_diagnose, x, as.double(as_of), as.double(oldest))
+  res <- .Call(C_pnrr_cpr_diagnose, x, as.double(as_of), as.double(oldest))
   rows <- res[[1L]]
   valid_rows <- rows[[1L]]
   v <- res[[2L]][valid_rows]
@@ -107,7 +107,7 @@ diagnose_cpr <- function(x, as_of = Sys.Date()) {
     birth_range = as.Date(res[[3L]]),
     male_share = if (n_valid) res[[4L]] / n_valid else NA_real_,
     as_of = as_of
-  ), class = "pnr_diagnosis")
+  ), class = "pnrr_diagnosis")
 }
 
 .as_of_date <- function(as_of) {
@@ -124,7 +124,7 @@ diagnose_cpr <- function(x, as_of = Sys.Date()) {
 }
 
 #' @export
-format.pnr_diagnosis <- function(x, ...) {
+format.pnrr_diagnosis <- function(x, ...) {
   ck <- x$checks
   get <- function(check) ck[ck$check == check, , drop = FALSE]
   num <- function(k) format(k, big.mark = ",", scientific = FALSE, trim = TRUE)
@@ -165,7 +165,7 @@ format.pnr_diagnosis <- function(x, ...) {
 }
 
 #' @export
-print.pnr_diagnosis <- function(x, ...) {
+print.pnrr_diagnosis <- function(x, ...) {
   f <- format(x)
   cli::cli_rule(left = "CPR diagnosis")
   esc <- function(s) gsub("}", "}}", gsub("{", "{{", s, fixed = TRUE), fixed = TRUE)
