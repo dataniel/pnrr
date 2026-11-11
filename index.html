@@ -46,7 +46,7 @@
 
 <p><a href="https://github.com/dataniel/pnrr/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/dataniel/pnrr/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://opensource.org/licenses/MIT" class="external-link"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></p>
 <p>Danish CPR numbers (personnumre) in register data: diagnose the column, standardise it, derive birth date, age and sex, and replace it with a serial number before the data leaves a secure environment.</p>
-<p><code><a href="reference/clean_cpr.html">clean_cpr()</a></code>, <code><a href="reference/add_cpr_info.html">add_cpr_info()</a></code> and <code><a href="reference/age.html">age()</a></code> moved here unchanged from <a href="https://github.com/dataniel/daos" class="external-link">daos</a>. pnrr depends only on cli and rlang; the CPR parsing is native C.</p>
+<p><code><a href="reference/clean_cpr.html">clean_cpr()</a></code> and <code><a href="reference/add_cpr_info.html">add_cpr_info()</a></code> moved here from <a href="https://github.com/dataniel/daos" class="external-link">daos</a>; its helper <code>age()</code> is now <code><a href="reference/age_at.html">age_at()</a></code>. pnrr depends only on cli and rlang; the CPR parsing is native C.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -63,7 +63,7 @@
 <span></span>
 <span><span class="va">persons</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pnr <span class="op">=</span> <span class="fu"><a href="reference/clean_cpr.html">clean_cpr</a></span><span class="op">(</span><span class="va">pnr</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span>        <span class="co"># restores Excel-lost leading zeros</span></span>
-<span>  <span class="fu"><a href="reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">pnr</span>, alder <span class="op">=</span> <span class="fu"><a href="reference/age.html">age</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, <span class="va">sex</span><span class="op">)</span> <span class="op">|&gt;</span>  <span class="co"># one native pass</span></span>
+<span>  <span class="fu"><a href="reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">pnr</span>, alder <span class="op">=</span> <span class="fu"><a href="reference/age_at.html">age_at</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, <span class="va">sex</span><span class="op">)</span> <span class="op">|&gt;</span>  <span class="co"># one native pass</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="reference/pseudo_cpr.html">pseudo_cpr</a></span><span class="op">(</span><span class="va">pnr</span><span class="op">)</span>, pnr <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -89,23 +89,22 @@
 </tr>
 <tr>
 <td><code><a href="reference/add_cpr_info.html">add_cpr_info()</a></code></td>
-<td>Add birth date, age, sex, modulus 11 and validity derived from CPR numbers</td>
+<td>Add birth date, age, sex, validity, status and modulus 11 derived from CPR numbers</td>
 </tr>
 <tr>
-<td><code><a href="reference/age.html">age()</a></code></td>
-<td>Choose the reference year or date for an age column in <code><a href="reference/add_cpr_info.html">add_cpr_info()</a></code>
-</td>
+<td><code><a href="reference/age_at.html">age_at()</a></code></td>
+<td>When the age in <code><a href="reference/add_cpr_info.html">add_cpr_info()</a></code> is measured: a year (<code>age_at(year, "ultimo")</code>) or a date (<code>age_at("2025-07-01")</code>)</td>
 </tr>
 <tr>
 <td>
-<code><a href="reference/cpr_birth_date.html">cpr_birth_date()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_birth_year()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_sex()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_valid()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_mod11()</a></code>
+<code><a href="reference/cpr_birth_date.html">cpr_birth_date()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_birth_year()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_sex()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_koen()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_valid()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_status()</a></code>, <code><a href="reference/cpr_birth_date.html">cpr_mod11()</a></code>
 </td>
 <td>One piece of information as a vector, for <code>mutate()</code> and <code><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter()</a></code>
 </td>
 </tr>
 <tr>
 <td><code><a href="reference/cpr_age.html">cpr_age()</a></code></td>
-<td>Age as a vector, with the same references as <code><a href="reference/age.html">age()</a></code>
+<td>Age as a vector, with the same reference as <code><a href="reference/age_at.html">age_at()</a></code>
 </td>
 </tr>
 <tr>

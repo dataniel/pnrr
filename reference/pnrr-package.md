@@ -18,7 +18,8 @@ holds the functions that work on it. See
   the canonical ten-digit form, for joins and export.
 
 - [`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
-  with [`age()`](https://dataniel.github.io/pnrr/reference/age.md):
+  with
+  [`age_at()`](https://dataniel.github.io/pnrr/reference/age_at.md):
   birth date, age, sex, modulus 11 and validity, in one native pass.
 
 - [`cpr_birth_date()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md),
@@ -33,8 +34,9 @@ holds the functions that work on it. See
 
 [`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md),
 [`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
-and [`age()`](https://dataniel.github.io/pnrr/reference/age.md) started
-in the daos package. They moved here, unchanged, when the CPR work grew
+and its helper `age()`, now
+[`age_at()`](https://dataniel.github.io/pnrr/reference/age_at.md),
+started in the daos package. They moved here when the CPR work grew
 beyond deriving columns: diagnosing a column and replacing the
 identifier belong with them and not with the general utilities in daos.
 pnrr depends only on cli and rlang, and daos does not depend on it, or

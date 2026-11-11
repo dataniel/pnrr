@@ -16,12 +16,14 @@ vector each, for `mutate()` and
 
 - [`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
   : Add information derived from Danish CPR numbers
-- [`age()`](https://dataniel.github.io/pnrr/reference/age.md) : Specify
-  an age calculation for CPR information
+- [`age_at()`](https://dataniel.github.io/pnrr/reference/age_at.md) :
+  The reference for an age from CPR numbers
 - [`cpr_birth_date()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
   [`cpr_birth_year()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
   [`cpr_sex()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
   [`cpr_valid()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
+  [`cpr_koen()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
+  [`cpr_status()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
   [`cpr_mod11()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
   : Derive one piece of information from CPR numbers
 - [`cpr_age()`](https://dataniel.github.io/pnrr/reference/cpr_age.md) :

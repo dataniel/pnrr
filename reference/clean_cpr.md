@@ -1,10 +1,10 @@
 # Standardise CPR numbers
 
 Cleans a vector of Danish CPR numbers to the canonical 10-digit form:
-dashes and spaces are stripped, and nine-digit values consisting only of
-digits are zero-padded on the left. The padding is well-founded: birth
-days 01-09 mean that roughly a third of all CPR numbers legitimately
-start with a zero, which Excel silently drops from numeric cells.
+separators are stripped, and nine-digit values consisting only of digits
+are zero-padded on the left. The padding is well-founded: birth days
+01-09 mean that roughly a third of all CPR numbers legitimately start
+with a zero, which Excel silently drops from numeric cells.
 
 ## Usage
 
@@ -16,14 +16,22 @@ clean_cpr(x)
 
 - x:
 
-  A character vector of CPR numbers. Numeric vectors are converted with
-  [`as.character()`](https://rdrr.io/r/base/character.html) first.
+  A character vector of CPR numbers. Numeric vectors and factors are
+  converted with
+  [`as.character()`](https://rdrr.io/r/base/character.html) first. Data
+  frames and lists are an error: pass the column, e.g. `df$pnr`.
 
 ## Value
 
 A character vector of the same length.
 
 ## Details
+
+Separators are dashes and spaces, and the characters that Excel, Word
+and copy-paste leave in their place and that cannot be told apart on
+screen: tabs and line breaks, the no-break space, and the typographic
+dashes (such as the en dash Word makes of a hyphen). Removing them never
+changes a digit.
 
 This is standardisation only, not validation. Values that cannot be
 brought to 10 digits are returned cleaned but otherwise untouched, so a

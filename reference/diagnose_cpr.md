@@ -47,7 +47,7 @@ of `x`:
   Validity is the same as in
   [`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md).
 
-- `missing`: `NA`, or empty once dashes and spaces are removed.
+- `missing`: `NA`, or empty once separators are removed.
 
 - `scientific`: written in scientific notation, such as `"1.11111E+09"`.
   Excel and some exports do this to long numbers. The trailing digits
@@ -57,7 +57,7 @@ of `x`:
 
 - `wrong_length`: only digits, but not nine or ten of them.
 
-- `non_digit`: contains characters other than digits, dashes and spaces.
+- `non_digit`: contains characters other than digits and separators.
 
 - `invalid_date`: ten digits, but the first six are not a real date.
 
@@ -68,7 +68,10 @@ errors, but each says something about where the data has been:
   01-09 make about a third of all CPR numbers start with a zero, and
   Excel drops it from numeric cells.
 
-- `separators`: contained dashes or spaces.
+- `separators`: contained dashes, spaces or the invisible separators
+  that
+  [`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md)
+  removes: tabs, line breaks, no-break spaces and typographic dashes.
 
 - `mod11_fails`: valid, but fails the modulus-11 check. Since 2007 the
   CPR office issues numbers that do not satisfy it, so this is not an
@@ -103,10 +106,10 @@ diagnose_cpr(x, as_of = "2025-01-01")
 #> ✖ 1 missing (row 8)
 #> ✖ 1 in scientific or decimal notation: digits are lost, read the source again as text (row 4)
 #> ✖ 1 with the wrong number of digits (row 6)
-#> ✖ 1 with characters other than digits, dashes and spaces (row 7)
+#> ✖ 1 with characters other than digits and separators (row 7)
 #> ✖ 1 with ten digits but no real birth date (row 5)
 #> ℹ 1 had lost a leading zero (Excel), restored by cleaning (row 3)
-#> ℹ 1 contained dashes or spaces (row 2)
+#> ℹ 1 contained dashes, spaces or invisible separators (row 2)
 #> ℹ 3 valid, sharing their CPR number with another row (rows 1, 2, 3)
 #> Birth dates 1911-11-11 to 2000-01-01; 75.0% male.
 

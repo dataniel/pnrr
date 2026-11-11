@@ -74,10 +74,10 @@ each.</p>
 <span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> 1 missing (row 8)</span></span>
 <span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> 1 in scientific or decimal notation: digits are lost, read the source again as text (row 4)</span></span>
 <span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> 1 with the wrong number of digits (row 6)</span></span>
-<span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> 1 with characters other than digits, dashes and spaces (row 7)</span></span>
+<span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> 1 with characters other than digits and separators (row 7)</span></span>
 <span><span class="co">#&gt; <span style="color: #BB0000;">✖</span> 1 with ten digits but no real birth date (row 5)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> 1 had lost a leading zero (Excel), restored by cleaning (row 3)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> 1 contained dashes or spaces (row 2)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> 1 contained dashes, spaces or invisible separators (row 2)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> 3 valid, sharing their CPR number with another row (rows 1, 2, 3)</span></span>
 <span><span class="co">#&gt; Birth dates 1911-11-11 to 2000-01-01; 75.0% male.</span></span></code></pre></div>
 <p>Every value gets one status: valid, missing, scientific notation,
@@ -121,6 +121,9 @@ so the natural place for it is inside a <code>mutate()</code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/clean_cpr.html">clean_cpr</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"111111-1118"</span>, <span class="st">"101004007"</span>, <span class="st">"1111111118"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "1111111118" "0101004007" "1111111118"</span></span></code></pre></div>
+<p>Besides dashes and spaces it removes the separators that cannot be
+seen: tabs, line breaks, no-break spaces, and the en dash Word makes of
+a hyphen.</p>
 <p>It zero-pads nine-digit values, because birth days 01 to 09 mean that
 a third of all CPR numbers start with a zero, which Excel drops. It does
 not validate: malformed values come back cleaned but still visibly
@@ -140,10 +143,10 @@ used for joins or export:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pnr <span class="op">=</span> <span class="fu"><a href="../reference/clean_cpr.html">clean_cpr</a></span><span class="op">(</span><span class="va">pnr</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">pnr</span>, <span class="fu"><a href="../reference/age.html">age</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, <span class="va">sex</span>, <span class="va">bday</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">pnr</span>, <span class="fu"><a href="../reference/age_at.html">age_at</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, <span class="va">sex</span>, <span class="va">bday</span><span class="op">)</span></span></code></pre></div>
 <p>Without selections, the function adds <code>bday</code>,
 <code>age</code>, <code>sex</code>, <code>mod11</code>, and
-<code>valid</code>. Bare <code>age</code> and <code><a href="../reference/age.html">age()</a></code> use
+<code>valid</code>. Bare <code>age</code> and <code><a href="../reference/age_at.html">age_at()</a></code> use
 today’s date; explicit references make analysis reproducible.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -152,8 +155,8 @@ today’s date; explicit references make analysis reproducible.</p>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           pnr year       bday age sex mod11 valid</span></span>
-<span><span class="co">#&gt; 1  1111111118 2024 1911-11-11 114   0  TRUE  TRUE</span></span>
-<span><span class="co">#&gt; 2 111111-1118 2025 1911-11-11 114   0  TRUE  TRUE</span></span>
+<span><span class="co">#&gt; 1  1111111118 2024 1911-11-11 115   0  TRUE  TRUE</span></span>
+<span><span class="co">#&gt; 2 111111-1118 2025 1911-11-11 115   0  TRUE  TRUE</span></span>
 <span><span class="co">#&gt; 3   111111118 2026 1911-11-01 115   0 FALSE  TRUE</span></span>
 <span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, <span class="va">sex</span>, birth_date <span class="op">=</span> <span class="va">bday</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           pnr year sex birth_date</span></span>
@@ -167,9 +170,9 @@ one call:</p>
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span></span>
 <span>    <span class="va">pnr</span>,</span>
-<span>    primoalder <span class="op">=</span> <span class="fu"><a href="../reference/age.html">age</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>,</span>
-<span>    medioalder <span class="op">=</span> <span class="fu"><a href="../reference/age.html">age</a></span><span class="op">(</span><span class="va">year</span>, <span class="st">"medio"</span><span class="op">)</span>,</span>
-<span>    ultimoalder <span class="op">=</span> <span class="fu"><a href="../reference/age.html">age</a></span><span class="op">(</span><span class="va">year</span>, <span class="st">"ultimo"</span><span class="op">)</span>,</span>
+<span>    primoalder <span class="op">=</span> <span class="fu"><a href="../reference/age_at.html">age_at</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>,</span>
+<span>    medioalder <span class="op">=</span> <span class="fu"><a href="../reference/age_at.html">age_at</a></span><span class="op">(</span><span class="va">year</span>, <span class="st">"medio"</span><span class="op">)</span>,</span>
+<span>    ultimoalder <span class="op">=</span> <span class="fu"><a href="../reference/age_at.html">age_at</a></span><span class="op">(</span><span class="va">year</span>, <span class="st">"ultimo"</span><span class="op">)</span>,</span>
 <span>    <span class="va">sex</span>,</span>
 <span>    <span class="va">bday</span></span>
 <span>  <span class="op">)</span></span>
@@ -177,34 +180,54 @@ one call:</p>
 <span><span class="co">#&gt; 1  1111111118 2024        112        112         113   0 1911-11-11</span></span>
 <span><span class="co">#&gt; 2 111111-1118 2025        113        113         114   0 1911-11-11</span></span>
 <span><span class="co">#&gt; 3   111111118 2026        114        114         115   0 1911-11-01</span></span></code></pre></div>
-<p><code>age(year)</code> defaults to <code>"primo"</code> with
-<code>primo = "previous_ultimo"</code> (31 December of the previous
-year); <code>"medio"</code> means 1 July and <code>"ultimo"</code> means
-31 December. <code>year</code> can be a scalar, a column, or an
-expression evaluated in the original input data.</p>
-<p>This default makes opening ages equal to the previous year’s closing
-ages. It can also be written explicitly:</p>
+<p><code><a href="../reference/age_at.html">age_at()</a></code> takes one reference, and its type decides what
+it is. Whole numbers are years, and the second argument chooses the day
+in the year:</p>
+<table class="table">
+<thead><tr class="header">
+<th><code>at</code></th>
+<th>Day</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+<code>"primo"</code> (default)</td>
+<td>31 December of the year before</td>
+</tr>
+<tr class="even">
+<td><code>"jan1"</code></td>
+<td>1 January</td>
+</tr>
+<tr class="odd">
+<td><code>"medio"</code></td>
+<td>1 July</td>
+</tr>
+<tr class="even">
+<td><code>"ultimo"</code></td>
+<td>31 December</td>
+</tr>
+</tbody>
+</table>
+<p>The reference can be one value, a column, or an expression on the
+columns of the input data.</p>
+<p>Primo is the day before the year begins, so <code>age_at(2025)</code>
+is the age on 31 December 2024. That makes opening ages equal to the
+previous year’s closing ages, as in population statistics. Someone born
+on 1 January 2000 is then 0 in counting year 2001;
+<code>age_at(year, "jan1")</code> instead includes that day’s birthday
+and gives 1.</p>
+<p>A Date or an ISO date string is a date, and takes no <code>at</code>.
+Supply one reference for all rows or one per row. Missing references
+give missing ages. Use <code>.env$name</code> to explicitly access a
+caller variable when a column has the same name.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, primoalder <span class="op">=</span> <span class="fu"><a href="../reference/age.html">age</a></span><span class="op">(</span><span class="va">year</span>, primo <span class="op">=</span> <span class="st">"previous_ultimo"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;           pnr year primoalder</span></span>
-<span><span class="co">#&gt; 1  1111111118 2024        112</span></span>
-<span><span class="co">#&gt; 2 111111-1118 2025        113</span></span>
-<span><span class="co">#&gt; 3   111111118 2026        114</span></span></code></pre></div>
-<p>Someone born on 1 January 2000 is then 0 in counting year 2001;
-<code>age(year, primo = "jan1")</code> instead includes that day’s
-birthday and gives 1.</p>
-<p>For a specific date, use <code>age(date = ...)</code> with a Date or
-ISO date string. Supply one reference for all rows or one per row.
-Missing references give missing ages. Use <code>.env$name</code> to
-explicitly access a caller variable when a column has the same name.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, alder <span class="op">=</span> <span class="fu"><a href="../reference/age.html">age</a></span><span class="op">(</span>date <span class="op">=</span> <span class="st">"2025-07-01"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, alder <span class="op">=</span> <span class="fu"><a href="../reference/age_at.html">age_at</a></span><span class="op">(</span><span class="st">"2025-07-01"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           pnr year alder</span></span>
 <span><span class="co">#&gt; 1  1111111118 2024   113</span></span>
 <span><span class="co">#&gt; 2 111111-1118 2025   113</span></span>
 <span><span class="co">#&gt; 3   111111118 2026   113</span></span>
 <span><span class="va">df</span><span class="op">$</span><span class="va">reference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">year</span>, <span class="st">"-01-01"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, alder <span class="op">=</span> <span class="fu"><a href="../reference/age.html">age</a></span><span class="op">(</span>date <span class="op">=</span> <span class="va">reference</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, alder <span class="op">=</span> <span class="fu"><a href="../reference/age_at.html">age_at</a></span><span class="op">(</span><span class="va">reference</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;           pnr year  reference alder</span></span>
 <span><span class="co">#&gt; 1  1111111118 2024 2024-01-01   112</span></span>
 <span><span class="co">#&gt; 2 111111-1118 2025 2025-01-01   113</span></span>
@@ -218,6 +241,33 @@ not confirmation that the CPR number was assigned. Missing and invalid
 CPR values give <code>valid = FALSE</code>. <code>mod11</code> is an
 independent checksum and is not part of <code>valid</code>. Choose
 <code>mod11</code> explicitly when selecting outputs if you need it.</p>
+<p><code>status</code> says why a value is not valid, with the problems
+of <code><a href="../reference/diagnose_cpr.html">diagnose_cpr()</a></code> as levels. Where the diagnosis answers
+for the column, <code>status</code> answers for each row, so the rows
+can be filtered or counted:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mixed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>pnr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0101004007"</span>, <span class="st">"3102004007"</span>, <span class="st">"1.01004E+08"</span>, <span class="st">"12345"</span>, <span class="cn">NA</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">mixed</span>, <span class="va">pnr</span>, <span class="va">valid</span>, <span class="va">status</span><span class="op">)</span></span>
+<span><span class="co">#&gt;           pnr valid       status</span></span>
+<span><span class="co">#&gt; 1  0101004007  TRUE        valid</span></span>
+<span><span class="co">#&gt; 2  3102004007 FALSE invalid_date</span></span>
+<span><span class="co">#&gt; 3 1.01004E+08 FALSE   scientific</span></span>
+<span><span class="co">#&gt; 4       12345 FALSE wrong_length</span></span>
+<span><span class="co">#&gt; 5        &lt;NA&gt; FALSE      missing</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpr_birth_date.html">cpr_status</a></span><span class="op">(</span><span class="va">mixed</span><span class="op">$</span><span class="va">pnr</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;        valid      missing   scientific wrong_length    non_digit invalid_date </span></span>
+<span><span class="co">#&gt;            1            1            1            1            0            1</span></span></code></pre></div>
+<p><code>sex</code> is 1 for men and 0 for women, which sums and
+averages directly. <code>koen</code> is the same information coded 1 for
+men and 2 for women, as the variable <code>KOEN</code> in the registers
+of Statistics Denmark, so the two can be compared without recoding:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, <span class="va">sex</span>, <span class="va">koen</span><span class="op">)</span></span>
+<span><span class="co">#&gt;           pnr year  reference sex koen</span></span>
+<span><span class="co">#&gt; 1  1111111118 2024 2024-01-01   0    2</span></span>
+<span><span class="co">#&gt; 2 111111-1118 2025 2025-01-01   0    2</span></span>
+<span><span class="co">#&gt; 3   111111118 2026 2026-01-01   0    2</span></span></code></pre></div>
 <p>Age counts completed calendar years, not elapsed days divided by
 365.25. For a person born on 29 February, age increases on 29 February
 in leap years and on 1 March in non-leap years. For a birth date of 29
@@ -250,10 +300,11 @@ February 2000:</p>
 </tr>
 </tbody>
 </table>
-<p><code>age(2024)</code> means age on 31 December 2023 by default,
+<p><code>age_at(2024)</code> means age on 31 December 2023 by default,
 giving age 23 in this example.</p>
-<p>Add <code>byear</code> for the birth year as an integer; it is not
-among the defaults.</p>
+<p>Add <code>byear</code> for the birth year as an integer. Like
+<code>koen</code> and <code>status</code>, it is not among the
+defaults.</p>
 </div>
 <div class="section level2">
 <h2 id="cpr_birth_date-cpr_age-and-friends-one-vector-at-a-time">
@@ -263,7 +314,7 @@ one vector at a time<a class="anchor" aria-label="anchor" href="#cpr_birth_date-
 <p>Where a data frame function does not fit, in a <code><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter()</a></code>
 or inside an <code><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse()</a></code>, each selection has a vector
 version:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0101004007"</span>, <span class="st">"111111-1118"</span>, <span class="st">"3102004007"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/cpr_birth_date.html">cpr_birth_date</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "2000-01-01" "1911-11-11" NA</span></span>
@@ -271,17 +322,22 @@ version:</p>
 <span><span class="co">#&gt; [1] 2000 1911   NA</span></span>
 <span><span class="fu"><a href="../reference/cpr_birth_date.html">cpr_sex</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]  1  0 NA</span></span>
+<span><span class="fu"><a href="../reference/cpr_birth_date.html">cpr_koen</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1]  1  2 NA</span></span>
 <span><span class="fu"><a href="../reference/cpr_birth_date.html">cpr_valid</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]  TRUE  TRUE FALSE</span></span>
+<span><span class="fu"><a href="../reference/cpr_birth_date.html">cpr_status</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] valid        valid        invalid_date</span></span>
+<span><span class="co">#&gt; Levels: valid missing scientific wrong_length non_digit invalid_date</span></span>
 <span><span class="fu"><a href="../reference/cpr_age.html">cpr_age</a></span><span class="op">(</span><span class="va">x</span>, <span class="fl">2025</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]  24 113  NA</span></span>
-<span><span class="fu"><a href="../reference/cpr_age.html">cpr_age</a></span><span class="op">(</span><span class="va">x</span>, date <span class="op">=</span> <span class="st">"2025-07-01"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cpr_age.html">cpr_age</a></span><span class="op">(</span><span class="va">x</span>, <span class="st">"2025-07-01"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1]  25 113  NA</span></span></code></pre></div>
 <p>They return exactly what the matching <code><a href="../reference/add_cpr_info.html">add_cpr_info()</a></code>
-selection does. <code><a href="../reference/cpr_age.html">cpr_age()</a></code> takes the same references as
-<code><a href="../reference/age.html">age()</a></code>, as values, so inside <code>mutate()</code> a column
-works directly:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+selection does. <code><a href="../reference/cpr_age.html">cpr_age()</a></code> takes the same reference as
+<code><a href="../reference/age_at.html">age_at()</a></code>, as a value, so inside <code>mutate()</code> a
+column works directly:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpr_birth_date.html">cpr_valid</a></span><span class="op">(</span><span class="va">pnr</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>alder <span class="op">=</span> <span class="fu"><a href="../reference/cpr_age.html">cpr_age</a></span><span class="op">(</span><span class="va">pnr</span>, <span class="va">year</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -295,10 +351,10 @@ number<a class="anchor" aria-label="anchor" href="#pseudo_cpr-a-serial-number-in
 </h2>
 <p>Before data leaves a secure environment, derive what the analysis
 needs and replace the CPR number with a serial number:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>pnr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0101004007"</span>, <span class="st">"1111111118"</span>, <span class="st">"010100-4007"</span><span class="op">)</span>, year <span class="op">=</span> <span class="fl">2025L</span><span class="op">)</span></span>
 <span><span class="va">df</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">pnr</span>, <span class="fu"><a href="../reference/age.html">age</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, <span class="va">sex</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/add_cpr_info.html">add_cpr_info</a></span><span class="op">(</span><span class="va">pnr</span>, <span class="fu"><a href="../reference/age_at.html">age_at</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, <span class="va">sex</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fu"><a href="../reference/pseudo_cpr.html">pseudo_cpr</a></span><span class="op">(</span><span class="va">pnr</span><span class="op">)</span>, pnr <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   year age sex id</span></span>
 <span><span class="co">#&gt; 1 2025  24   1  1</span></span>
@@ -312,9 +368,13 @@ in order of appearance the row order of the source file.</p>
 tables, pseudonymise them in one call or join first. Use
 <code>seed</code> to get the same numbering again on exactly the same
 input:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pseudo_cpr.html">pseudo_cpr</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0101004007"</span>, <span class="st">"1111111118"</span>, <span class="st">"010100-4007"</span><span class="op">)</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1 2 1</span></span></code></pre></div>
+<p>A seed is a secret. With the seed and the number of persons, anyone
+can redo the shuffle and find where in the source each serial number
+first appeared. Keep it, and the script that contains it, with the
+source data.</p>
 <p>A serial number makes the data pseudonymous, not anonymous: birth
 date, sex and other columns can still single out a person.</p>
 </div>

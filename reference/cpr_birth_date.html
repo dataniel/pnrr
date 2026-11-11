@@ -54,6 +54,10 @@ function does not fit.</p>
 <span></span>
 <span><span class="fu">cpr_valid</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span></span>
+<span><span class="fu">cpr_koen</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">cpr_status</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">cpr_mod11</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -64,7 +68,7 @@ function does not fit.</p>
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>A vector of CPR numbers. Values are read after the same cleaning
 as <code><a href="clean_cpr.html">clean_cpr()</a></code>, so dashes, spaces and a lost leading zero do not
-matter. Numeric vectors and factors are converted with <code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code>.</p></dd>
+matter. Numbers are read as their digits, and factors as their labels.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -74,20 +78,29 @@ matter. Numeric vectors and factors are converted with <code><a href="https://rd
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The values are exactly those of the matching selection in
-<code><a href="add_cpr_info.html">add_cpr_info()</a></code>, from the same native code:</p><table class="table table"><tr><td>Function</td><td>Selection</td><td>Type</td></tr><tr><td><code>cpr_birth_date()</code></td><td><code>bday</code></td><td>Date</td></tr><tr><td><code>cpr_birth_year()</code></td><td><code>byear</code></td><td>integer</td></tr><tr><td><code>cpr_sex()</code></td><td><code>sex</code></td><td>integer, 1 male (odd final digit), 0 female</td></tr><tr><td><code>cpr_valid()</code></td><td><code>valid</code></td><td>logical, never <code>NA</code></td></tr><tr><td><code>cpr_mod11()</code></td><td><code>mod11</code></td><td>logical, <code>NA</code> when not ten digits</td></tr></table><p>Birth date, birth year and sex are <code>NA</code> where <code>cpr_valid()</code> is <code>FALSE</code>.
+<code><a href="add_cpr_info.html">add_cpr_info()</a></code>, from the same native code:</p><table class="table table"><tr><td>Function</td><td>Selection</td><td>Type</td></tr><tr><td><code>cpr_birth_date()</code></td><td><code>bday</code></td><td>Date</td></tr><tr><td><code>cpr_birth_year()</code></td><td><code>byear</code></td><td>integer</td></tr><tr><td><code>cpr_sex()</code></td><td><code>sex</code></td><td>integer, 1 male (odd final digit), 0 female</td></tr><tr><td><code>cpr_koen()</code></td><td><code>koen</code></td><td>integer, 1 male, 2 female</td></tr><tr><td><code>cpr_valid()</code></td><td><code>valid</code></td><td>logical, never <code>NA</code></td></tr><tr><td><code>cpr_status()</code></td><td><code>status</code></td><td>factor, never <code>NA</code></td></tr><tr><td><code>cpr_mod11()</code></td><td><code>mod11</code></td><td>logical, <code>NA</code> when not ten digits</td></tr></table><p>Birth date, birth year and sex are <code>NA</code> where <code>cpr_valid()</code> is <code>FALSE</code>.
 <code>cpr_valid()</code> checks ten digits and a real encoded date, not whether the
 number was assigned to a person; modulus 11 is not part of it, because
 the CPR office has issued numbers that fail it since 2007.</p>
+<p><code>cpr_status()</code> says why. Its levels are <code>valid</code>, <code>missing</code>, <code>scientific</code>,
+<code>wrong_length</code>, <code>non_digit</code> and <code>invalid_date</code>: the problems of
+<code><a href="diagnose_cpr.html">diagnose_cpr()</a></code>, where each is explained, and always in agreement
+with it. <code>cpr_status(x) == "valid"</code> is <code>cpr_valid(x)</code>. It is a factor so
+that <code>table(cpr_status(x))</code> also shows the problems that did not occur.</p>
+<p><code>cpr_sex()</code> and <code>cpr_koen()</code> hold the same information in two codings.
+<code>cpr_sex()</code> is 0/1, which sums and averages directly. <code>cpr_koen()</code> is 1/2
+as <code>KOEN</code> in the registers of Statistics Denmark, so the two can be
+compared without recoding.</p>
 <p>Birth year is its own function rather than an option of
 <code>cpr_birth_date()</code>, so each function always returns one type.</p>
-<p>Each call parses the CPR numbers again. That costs little, about a tenth
-of a second per million values, but when you need several columns,
-<code><a href="add_cpr_info.html">add_cpr_info()</a></code> parses once for all of them.</p>
+<p>Each call parses the CPR numbers again. That costs little, a few
+hundredths of a second per million values, but when you need several
+columns, <code><a href="add_cpr_info.html">add_cpr_info()</a></code> parses once for all of them.</p>
 <p>For age, see <code><a href="cpr_age.html">cpr_age()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="cpr_age.html">cpr_age()</a></code>, <code><a href="add_cpr_info.html">add_cpr_info()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="cpr_age.html">cpr_age()</a></code>, <code><a href="add_cpr_info.html">add_cpr_info()</a></code>, <code><a href="diagnose_cpr.html">diagnose_cpr()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -99,8 +112,17 @@ of a second per million values, but when you need several columns,
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2000 1911 2000   NA   NA</span>
 <span class="r-in"><span><span class="fu">cpr_sex</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1]  1  0  1 NA NA</span>
+<span class="r-in"><span><span class="fu">cpr_koen</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]  1  2  1 NA NA</span>
 <span class="r-in"><span><span class="fu">cpr_valid</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1]  TRUE  TRUE  TRUE FALSE FALSE</span>
+<span class="r-in"><span><span class="fu">cpr_status</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] valid        valid        valid        invalid_date missing     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Levels: valid missing scientific wrong_length non_digit invalid_date</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu">cpr_status</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        valid      missing   scientific wrong_length    non_digit invalid_date </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            3            1            0            0            0            1 </span>
 <span class="r-in"><span><span class="fu">cpr_mod11</span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1]  TRUE  TRUE  TRUE FALSE    NA</span>
 <span class="r-in"><span></span></span>

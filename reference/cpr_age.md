@@ -3,15 +3,15 @@
 The vector version of the `age` selection in
 [`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md):
 CPR numbers in, ages in completed calendar years out. It takes the same
-references as
-[`age()`](https://dataniel.github.io/pnrr/reference/age.md), but as
-values rather than column names, so it fits inside
+reference as
+[`age_at()`](https://dataniel.github.io/pnrr/reference/age_at.md), but
+as a value rather than a column name, so it fits inside
 [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html).
 
 ## Usage
 
 ``` r
-cpr_age(x, year, at = "primo", date, primo = "previous_ultimo")
+cpr_age(x, ref, at = "primo")
 ```
 
 ## Arguments
@@ -21,18 +21,21 @@ cpr_age(x, year, at = "primo", date, primo = "previous_ultimo")
   A vector of CPR numbers, cleaned as in
   [`clean_cpr()`](https://dataniel.github.io/pnrr/reference/clean_cpr.md).
 
-- year:
+- ref:
 
-  Numeric whole year(s): one for all, or one per CPR number. Inside
+  The reference: whole numbers are years, a Date vector or ISO date
+  strings (`"YYYY-MM-DD"`) are dates. One for all, or one per CPR
+  number. Inside
   [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html)
-  this can be a column, e.g. `cpr_age(pnr, year)`.
+  this can be a column, e.g. `cpr_age(pnr, year)`. Left out, the age is
+  today's.
 
-- at, date, primo:
+- at:
 
-  As in [`age()`](https://dataniel.github.io/pnrr/reference/age.md):
-  `at` is `"primo"`, `"medio"` or `"ultimo"`; `date` is a Date vector or
-  ISO date strings instead of `year`; `primo` is the convention for
-  `at = "primo"`.
+  The day in the year, when `ref` is a year: `"primo"` (default, 31
+  December of the year before), `"jan1"`, `"medio"` (1 July) or
+  `"ultimo"` (31 December). As in
+  [`age_at()`](https://dataniel.github.io/pnrr/reference/age_at.md).
 
 ## Value
 
@@ -40,12 +43,12 @@ An integer vector of the same length as `x`.
 
 ## Details
 
-With neither `year` nor `date`, age is today's. Use an explicit
-reference for reproducible analysis. The default `age(year)` convention
-applies: primo is 31 December of the previous year, so opening ages
-equal the previous year's closing ages. See
-[`age()`](https://dataniel.github.io/pnrr/reference/age.md) for the
-conventions and
+Use an explicit reference for reproducible analysis; today's date
+changes between runs. `cpr_age(x, 2025)` is the age on 31 December 2024:
+primo is the closing of the year before, so opening ages equal the
+previous year's closing ages. See
+[`age_at()`](https://dataniel.github.io/pnrr/reference/age_at.md) for
+the reasoning and
 [`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md)
 for leap-day birthdays.
 
@@ -55,7 +58,7 @@ and for missing references.
 
 ## See also
 
-[`age()`](https://dataniel.github.io/pnrr/reference/age.md),
+[`age_at()`](https://dataniel.github.io/pnrr/reference/age_at.md),
 [`add_cpr_info()`](https://dataniel.github.io/pnrr/reference/add_cpr_info.md),
 [`cpr_birth_date()`](https://dataniel.github.io/pnrr/reference/cpr_birth_date.md)
 
@@ -67,9 +70,9 @@ cpr_age(x, 2025)
 #> [1]  24 113  NA
 cpr_age(x, 2025, "ultimo")
 #> [1]  25 114  NA
-cpr_age(x, date = "2025-07-01")
+cpr_age(x, "2025-07-01")
 #> [1]  25 113  NA
-cpr_age(x, year = c(2024, 2025, 2025))
+cpr_age(x, c(2024, 2025, 2025))
 #> [1]  23 113  NA
 
 # df |> dplyr::mutate(alder = cpr_age(pnr, year))

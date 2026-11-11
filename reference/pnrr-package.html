@@ -54,7 +54,7 @@ functions that work on it. See <code><a href="../articles/pnrr.html">vignette("p
 <ul><li><p><code><a href="diagnose_cpr.html">diagnose_cpr()</a></code>: what is wrong with a CPR column, in counts and row
 numbers, never in CPR numbers.</p></li>
 <li><p><code><a href="clean_cpr.html">clean_cpr()</a></code>: the canonical ten-digit form, for joins and export.</p></li>
-<li><p><code><a href="add_cpr_info.html">add_cpr_info()</a></code> with <code><a href="age.html">age()</a></code>: birth date, age, sex, modulus 11 and
+<li><p><code><a href="add_cpr_info.html">add_cpr_info()</a></code> with <code><a href="age_at.html">age_at()</a></code>: birth date, age, sex, modulus 11 and
 validity, in one native pass.</p></li>
 <li><p><code><a href="cpr_birth_date.html">cpr_birth_date()</a></code>, <code><a href="cpr_age.html">cpr_age()</a></code> and friends: the same information one
 vector at a time, for <code>mutate()</code> and <code><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter()</a></code>.</p></li>
@@ -65,9 +65,9 @@ vector at a time, for <code>mutate()</code> and <code><a href="https://rdrr.io/r
 <h3 id="why-a-package-of-its-own">Why a package of its own<a class="anchor" aria-label="anchor" href="#why-a-package-of-its-own"></a></h3>
 
 
-<p><code><a href="clean_cpr.html">clean_cpr()</a></code>, <code><a href="add_cpr_info.html">add_cpr_info()</a></code> and <code><a href="age.html">age()</a></code> started in the daos package.
-They moved here, unchanged, when the CPR work grew beyond deriving
-columns: diagnosing a column and replacing the identifier belong with
+<p><code><a href="clean_cpr.html">clean_cpr()</a></code>, <code><a href="add_cpr_info.html">add_cpr_info()</a></code> and its helper <code>age()</code>, now <code><a href="age_at.html">age_at()</a></code>,
+started in the daos package. They moved here when the CPR work grew
+beyond deriving columns: diagnosing a column and replacing the identifier belong with
 them and not with the general utilities in daos. pnrr depends only on cli
 and rlang, and daos does not depend on it, or it on daos.</p>
 </div>

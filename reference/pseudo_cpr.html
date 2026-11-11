@@ -62,7 +62,8 @@ get the same serial number as <code>"0101004007"</code>.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Optional single whole number. With a seed, the same input
 gives the same serial numbers on every run; the global random number
-stream is left as it was. Without one, every call draws anew.</p></dd>
+stream is left as it was. Without one, every call draws anew. A seed
+is a secret: see Details.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -81,6 +82,13 @@ also on overlapping data. To link several tables, pseudonymise them in
 one call, for example on the bound key columns, or join first and
 pseudonymise the result. A fixed <code>seed</code> reproduces the numbering only for
 exactly the same input; it is not a key that links different data sets.</p>
+<p><strong>A seed is a secret.</strong> With a seed, the numbering is a fixed shuffle of
+the CPR numbers in their order of first appearance. Anyone who knows the
+seed and the number of distinct values can redo the shuffle and read off,
+for every serial number, where in the source that person first appeared;
+with the source file, that is the CPR number. Keep the seed, and a script
+that contains it, inside the secure environment with the source data.
+Without a seed there is nothing to keep.</p>
 <p><strong>Pseudonymous, not anonymous.</strong> Replacing the identifier does not make
 the data anonymous in the sense of the GDPR. Birth date, sex,
 municipality and other columns can still single out a person. Derive

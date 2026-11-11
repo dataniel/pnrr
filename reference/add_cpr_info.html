@@ -53,10 +53,11 @@
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Information to add: <code>bday</code>, <code>byear</code>, <code>sex</code>, <code>valid</code>, <code>mod11</code>,
-<code>age</code>, or <code><a href="age.html">age()</a></code> with a reference year or date. Name a selection to choose its
-output column, e.g. <code>birth_date = bday</code>. With no selections, adds
-<code>bday</code>, <code>age</code>, <code>sex</code>, <code>mod11</code>, and <code>valid</code>. Bare <code>age</code> uses today's date.</p></dd>
+<dd><p>Information to add: <code>bday</code>, <code>byear</code>, <code>sex</code>, <code>koen</code>, <code>valid</code>,
+<code>status</code>, <code>mod11</code>, <code>age</code>, or <code><a href="age_at.html">age_at()</a></code> with a reference year or
+date. Name a selection to choose its output column, e.g.
+<code>birth_date = bday</code>. With no selections, adds <code>bday</code>, <code>age</code>, <code>sex</code>,
+<code>mod11</code>, and <code>valid</code>. Bare <code>age</code> uses today's date.</p></dd>
 
 
 <dt id="arg--overwrite">.overwrite<a class="anchor" aria-label="anchor" href="#arg--overwrite"></a></dt>
@@ -70,14 +71,21 @@ The CPR source column cannot be replaced.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>bday</code> is a Date; <code>byear</code> is the birth year (integer), not among the
-defaults; <code>age</code> is completed calendar years (integer); <code>sex</code> is
-integer 1 for an odd final digit (male), 0 for even (female).
-<code>valid</code> checks ten digits and a real encoded calendar date, not whether
+
+<table class="table table"><tr><td>Selection</td><td>Value</td></tr><tr><td><code>bday</code></td><td>Birth date, a Date</td></tr><tr><td><code>byear</code></td><td>Birth year, an integer</td></tr><tr><td><code>age</code>, <code><a href="age_at.html">age_at()</a></code></td><td>Completed calendar years, an integer</td></tr><tr><td><code>sex</code></td><td>Integer, 1 male (odd final digit), 0 female</td></tr><tr><td><code>koen</code></td><td>Integer, 1 male, 2 female: the coding of <code>KOEN</code> in the registers of Statistics Denmark</td></tr><tr><td><code>valid</code></td><td>Logical: ten digits and a real encoded date</td></tr><tr><td><code>status</code></td><td>Factor: why a value is or is not valid</td></tr><tr><td><code>mod11</code></td><td>Logical: the modulus-11 checksum</td></tr></table><p><code>valid</code> checks ten digits and a real encoded calendar date, not whether
 the number was assigned to a person. Missing and malformed CPRs give
 <code>valid = FALSE</code> and missing birth date, age, and sex.
 <code>mod11</code> is a separate logical checksum, not a requirement for <code>valid</code>.
 Malformed formats give a missing checksum.</p>
+<p><code>status</code> says what <code>valid</code> cannot: its levels are <code>valid</code>, <code>missing</code>,
+<code>scientific</code>, <code>wrong_length</code>, <code>non_digit</code> and <code>invalid_date</code>, the problems
+of <code><a href="diagnose_cpr.html">diagnose_cpr()</a></code>, where they are explained. <code><a href="diagnose_cpr.html">diagnose_cpr()</a></code>
+answers for a column, <code>status</code> for each row, so the rows can be filtered
+or counted by group.</p>
+<p><code>sex</code> and <code>koen</code> hold the same information in two codings. <code>sex</code> is 0/1,
+which sums and averages directly; <code>koen</code> is 1/2 and compares directly
+with the <code>KOEN</code> variable of the registers
+(<a href="https://www.dst.dk/da/TilSalg/data-til-forskning/generelt-om-data/dokumentation-af-data/hoejkvalitetsvariable/Folketal/KOEN" class="external-link">https://www.dst.dk/da/TilSalg/data-til-forskning/generelt-om-data/dokumentation-af-data/hoejkvalitetsvariable/Folketal/KOEN</a>).</p>
 <p>CPR values are cleaned internally with <code><a href="clean_cpr.html">clean_cpr()</a></code>. To also standardise
 the source column, use <code>dplyr::mutate(pnr = clean_cpr(pnr))</code> explicitly.
 Rows, row order, and input columns are preserved unless <code>.overwrite = TRUE</code>.
@@ -92,18 +100,19 @@ itself must be standardised for joins or export.</p>
 <code>add_cpr_info()</code> when you need several: it parses each CPR once.</p>
 <p>The arguments have a dot prefix, as in dplyr, so that an output name
 never reaches them: R matches named arguments by partial name before
-<code>...</code>, and <code>d = bday</code> or <code>cpr = age(year)</code> would otherwise be taken as
+<code>...</code>, and <code>d = bday</code> or <code>cpr = age_at(year)</code> would otherwise be taken as
 <code>data</code> or <code>cpr_col</code>.</p>
 <p>For 29 February births, age advances on 1 March in non-leap years.
 A reference before birth gives a negative age. Use an explicit reference
 for reproducible analysis; today's date changes between runs.</p>
-<p>This selection API replaces <code>add</code>, <code>ref_date</code>, <code>year</code>, and <code>at</code> arguments:
-use <code>age(year, "primo")</code> or <code>age(date = reference_date)</code> instead.
-Unlike the previous API, the source CPR column is preserved.</p>
+<p>In daos, <code>add_cpr_info()</code> took <code>add</code>, <code>ref_date</code>, <code>year</code> and <code>at</code>
+arguments, and later the helper <code>age()</code>. Selections and
+<code><a href="age_at.html">age_at()</a></code> replace them; each old form gives an error that points
+to the new one.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="age.html">age()</a></code>, <code><a href="clean_cpr.html">clean_cpr()</a></code>, <code><a href="cpr_birth_date.html">cpr_birth_date()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="age_at.html">age_at()</a></code>, <code><a href="clean_cpr.html">clean_cpr()</a></code>, <code><a href="cpr_birth_date.html">cpr_birth_date()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -112,20 +121,29 @@ Unlike the previous API, the source CPR column is preserved.</p>
 <span class="r-in"><span><span class="fu">add_cpr_info</span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           pnr year       bday age sex mod11 valid</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  0101004007 2024 2000-01-01  26   1  TRUE  TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 111111-1118 2025 1911-11-11 114   0  TRUE  TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 111111-1118 2025 1911-11-11 115   0  TRUE  TRUE</span>
 <span class="r-in"><span><span class="fu">add_cpr_info</span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, <span class="va">sex</span>, birth_date <span class="op">=</span> <span class="va">bday</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           pnr year sex birth_date</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  0101004007 2024   1 2000-01-01</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 111111-1118 2025   0 1911-11-11</span>
 <span class="r-in"><span><span class="fu">add_cpr_info</span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>,</span></span>
-<span class="r-in"><span>  primoalder <span class="op">=</span> <span class="fu"><a href="age.html">age</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, ultimoalder <span class="op">=</span> <span class="fu"><a href="age.html">age</a></span><span class="op">(</span><span class="va">year</span>, <span class="st">"ultimo"</span><span class="op">)</span>, <span class="va">sex</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  primoalder <span class="op">=</span> <span class="fu"><a href="age_at.html">age_at</a></span><span class="op">(</span><span class="va">year</span><span class="op">)</span>, ultimoalder <span class="op">=</span> <span class="fu"><a href="age_at.html">age_at</a></span><span class="op">(</span><span class="va">year</span>, <span class="st">"ultimo"</span><span class="op">)</span>, <span class="va">sex</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           pnr year primoalder ultimoalder sex</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  0101004007 2024         23          24   1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 111111-1118 2025        113         114   0</span>
-<span class="r-in"><span><span class="fu">add_cpr_info</span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, alder <span class="op">=</span> <span class="fu"><a href="age.html">age</a></span><span class="op">(</span>date <span class="op">=</span> <span class="st">"2025-07-01"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">add_cpr_info</span><span class="op">(</span><span class="va">df</span>, <span class="va">pnr</span>, alder <span class="op">=</span> <span class="fu"><a href="age_at.html">age_at</a></span><span class="op">(</span><span class="st">"2025-07-01"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           pnr year alder</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  0101004007 2024    25</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 111111-1118 2025   113</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Why a value is not valid, and sex as in the registers</span></span></span>
+<span class="r-in"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>pnr <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0101004007"</span>, <span class="st">"3102004007"</span>, <span class="st">"1.01004E+08"</span>, <span class="cn">NA</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">add_cpr_info</span><span class="op">(</span><span class="va">bad</span>, <span class="va">pnr</span>, <span class="va">status</span>, <span class="va">koen</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           pnr       status koen</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  0101004007        valid    1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  3102004007 invalid_date   NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 1.01004E+08   scientific   NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4        &lt;NA&gt;      missing   NA</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
