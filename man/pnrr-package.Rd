@@ -17,7 +17,7 @@ functions that work on it. See \code{vignette("pnrr")}.
 \item \code{\link[=diagnose_cpr]{diagnose_cpr()}}: what is wrong with a CPR column, in counts and row
 numbers, never in CPR numbers.
 \item \code{\link[=clean_cpr]{clean_cpr()}}: the canonical ten-digit form, for joins and export.
-\item \code{\link[=add_cpr_info]{add_cpr_info()}} with \code{\link[=age]{age()}}: birth date, age, sex, modulus 11 and
+\item \code{\link[=add_cpr_info]{add_cpr_info()}} with \code{\link[=age_at]{age_at()}}: birth date, age, sex, modulus 11 and
 validity, in one native pass.
 \item \code{\link[=cpr_birth_date]{cpr_birth_date()}}, \code{\link[=cpr_age]{cpr_age()}} and friends: the same information one
 vector at a time, for \code{mutate()} and \code{filter()}.
@@ -27,9 +27,9 @@ vector at a time, for \code{mutate()} and \code{filter()}.
 
 \subsection{Why a package of its own}{
 
-\code{clean_cpr()}, \code{add_cpr_info()} and \code{age()} started in the daos package.
-They moved here, unchanged, when the CPR work grew beyond deriving
-columns: diagnosing a column and replacing the identifier belong with
+\code{clean_cpr()}, \code{add_cpr_info()} and its helper \code{age()}, now \code{\link[=age_at]{age_at()}},
+started in the daos package. They moved here when the CPR work grew
+beyond deriving columns: diagnosing a column and replacing the identifier belong with
 them and not with the general utilities in daos. pnrr depends only on cli
 and rlang, and daos does not depend on it, or it on daos.
 }

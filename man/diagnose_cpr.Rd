@@ -37,14 +37,14 @@ of \code{x}:
 \item \code{valid}: ten digits encoding a real birth date, after the same
 cleaning as \code{\link[=clean_cpr]{clean_cpr()}}. Validity is the same as in
 \code{\link[=add_cpr_info]{add_cpr_info()}}.
-\item \code{missing}: \code{NA}, or empty once dashes and spaces are removed.
+\item \code{missing}: \code{NA}, or empty once separators are removed.
 \item \code{scientific}: written in scientific notation, such as \code{"1.11111E+09"}.
 Excel and some exports do this to long numbers. The trailing digits are
 gone and cannot be restored; the source has to be read again with the
 column as text.
 \code{"1111111118.0"} and similar decimal forms are counted here too.
 \item \code{wrong_length}: only digits, but not nine or ten of them.
-\item \code{non_digit}: contains characters other than digits, dashes and spaces.
+\item \code{non_digit}: contains characters other than digits and separators.
 \item \code{invalid_date}: ten digits, but the first six are not a real date.
 }
 
@@ -54,7 +54,9 @@ errors, but each says something about where the data has been:
 \item \code{zero_restored}: nine digits, padded with a leading zero. Birth days
 01-09 make about a third of all CPR numbers start with a zero, and
 Excel drops it from numeric cells.
-\item \code{separators}: contained dashes or spaces.
+\item \code{separators}: contained dashes, spaces or the invisible separators that
+\code{\link[=clean_cpr]{clean_cpr()}} removes: tabs, line breaks, no-break spaces and
+typographic dashes.
 \item \code{mod11_fails}: valid, but fails the modulus-11 check. Since 2007 the CPR
 office issues numbers that do not satisfy it, so this is not an error by
 itself (\url{https://cpr.dk}). A large share among older birth dates can

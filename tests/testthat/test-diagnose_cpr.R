@@ -118,3 +118,14 @@ test_that("empty input and bad arguments", {
   expect_error(diagnose_cpr("0101004007", as_of = 2025), "as_of")
   expect_error(diagnose_cpr("0101004007", as_of = c("2025-01-01", "2026-01-01")), "as_of")
 })
+
+test_that("invisible separators are a note, not a problem", {
+  d <- diagnose_cpr(c("010100–4007", "0101004007\t", " ", "1.01004E+08\t"),
+                    as_of = "2025-01-01")
+  n <- function(check) d$checks$n[d$checks$check == check]
+  expect_identical(n("valid"), 2L)
+  expect_identical(n("missing"), 1L)
+  expect_identical(n("scientific"), 1L)
+  expect_identical(n("non_digit"), 0L)
+  expect_identical(n("separators"), 4L)
+})

@@ -7,7 +7,7 @@ canonical <- rep("0101004007", nrow(df))
 cases <- list(
   all = function(api) api$add_cpr_info(df, pnr),
   multiple_ages = function(api) api$add_cpr_info(df, pnr,
-    primo = age(year), ultimo = age(year, "ultimo"), sex, bday),
+    primo = age_at(year), ultimo = age_at(year, "ultimo"), sex, bday),
   clean_canonical = function(api) api$clean_cpr(canonical)
 )
 rows <- list()

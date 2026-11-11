@@ -30,17 +30,17 @@ for (n in sizes) {
   cases <- list(
     clean_canonical = function(api) api$clean_cpr(pnr),
     clean_mixed = function(api) api$clean_cpr(mixed),
-    age_year = function(api) api$add_cpr_info(df, pnr, age(year)),
-    age_date = function(api) api$add_cpr_info(df, pnr, age(date = date)),
-    age_text_date = function(api) api$add_cpr_info(df, pnr, age(date = text_date)),
+    age_year = function(api) api$add_cpr_info(df, pnr, age_at(year)),
+    age_date = function(api) api$add_cpr_info(df, pnr, age_at(date)),
+    age_text_date = function(api) api$add_cpr_info(df, pnr, age_at(text_date)),
     all = function(api) api$add_cpr_info(df, pnr),
     multiple_ages = function(api) api$add_cpr_info(df, pnr,
-      primo = age(year), medio = age(year, "medio"), ultimo = age(year, "ultimo"), sex, bday),
-    precleaned = function(api) api$add_cpr_info(cleaned, pnr, age(year), sex, bday),
+      primo = age_at(year), medio = age_at(year, "medio"), ultimo = age_at(year, "ultimo"), sex, bday),
+    precleaned = function(api) api$add_cpr_info(cleaned, pnr, age_at(year), sex, bday),
     clean_then_add = function(api) {
       x <- df
       x$pnr <- api$clean_cpr(x$pnr)
-      api$add_cpr_info(x, pnr, age(year), sex, bday)
+      api$add_cpr_info(x, pnr, age_at(year), sex, bday)
     }
   )
   for (case in names(cases)) {

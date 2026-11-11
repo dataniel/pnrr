@@ -27,7 +27,7 @@ reference:
       functions give one vector each, for `mutate()` and `filter()`.
     contents:
       - add_cpr_info
-      - age
+      - age_at
       - cpr_birth_date
       - cpr_age
 

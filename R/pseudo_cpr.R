@@ -10,7 +10,8 @@
 #'   get the same serial number as `"0101004007"`.
 #' @param seed Optional single whole number. With a seed, the same input
 #'   gives the same serial numbers on every run; the global random number
-#'   stream is left as it was. Without one, every call draws anew.
+#'   stream is left as it was. Without one, every call draws anew. A seed
+#'   is a secret: see Details.
 #'
 #' @details
 #' **Why random order.** Numbering in sorted order would make the serial
@@ -24,6 +25,14 @@
 #' one call, for example on the bound key columns, or join first and
 #' pseudonymise the result. A fixed `seed` reproduces the numbering only for
 #' exactly the same input; it is not a key that links different data sets.
+#'
+#' **A seed is a secret.** With a seed, the numbering is a fixed shuffle of
+#' the CPR numbers in their order of first appearance. Anyone who knows the
+#' seed and the number of distinct values can redo the shuffle and read off,
+#' for every serial number, where in the source that person first appeared;
+#' with the source file, that is the CPR number. Keep the seed, and a script
+#' that contains it, inside the secure environment with the source data.
+#' Without a seed there is nothing to keep.
 #'
 #' **Pseudonymous, not anonymous.** Replacing the identifier does not make
 #' the data anonymous in the sense of the GDPR. Birth date, sex,
@@ -57,7 +66,7 @@ pseudo_cpr <- function(x, seed = NULL) {
                          seed != trunc(seed) || abs(seed) > .Machine$integer.max)) {
     cli::cli_abort("{.arg seed} must be NULL or a single whole number.")
   }
-  if (!is.character(x)) x <- as.character(x)
+  x <- .cpr_text(x)
   x <- .Call(C_pnrr_clean_cpr, unname(x))
   x[!is.na(x) & x == ""] <- NA_character_
   keys <- unique(x[!is.na(x)])

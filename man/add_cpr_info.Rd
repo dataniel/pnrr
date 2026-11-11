@@ -11,10 +11,11 @@ add_cpr_info(.data, .cpr_col, ..., .overwrite = FALSE)
 
 \item{.cpr_col}{CPR column, unquoted or a literal column-name string.}
 
-\item{...}{Information to add: \code{bday}, \code{byear}, \code{sex}, \code{valid}, \code{mod11},
-\code{age}, or \code{\link[=age]{age()}} with a reference year or date. Name a selection to choose its
-output column, e.g. \code{birth_date = bday}. With no selections, adds
-\code{bday}, \code{age}, \code{sex}, \code{mod11}, and \code{valid}. Bare \code{age} uses today's date.}
+\item{...}{Information to add: \code{bday}, \code{byear}, \code{sex}, \code{koen}, \code{valid},
+\code{status}, \code{mod11}, \code{age}, or \code{\link[=age_at]{age_at()}} with a reference year or
+date. Name a selection to choose its output column, e.g.
+\code{birth_date = bday}. With no selections, adds \code{bday}, \code{age}, \code{sex},
+\code{mod11}, and \code{valid}. Bare \code{age} uses today's date.}
 
 \item{.overwrite}{Allow replacing existing output columns? Default \code{FALSE}.
 The CPR source column cannot be replaced.}
@@ -26,14 +27,35 @@ The input data frame with selected columns added in selection order.
 Add selected CPR information without changing the original CPR column.
 }
 \details{
-\code{bday} is a Date; \code{byear} is the birth year (integer), not among the
-defaults; \code{age} is completed calendar years (integer); \code{sex} is
-integer 1 for an odd final digit (male), 0 for even (female).
+\tabular{ll}{
+   Selection \tab Value \cr
+   \code{bday} \tab Birth date, a Date \cr
+   \code{byear} \tab Birth year, an integer \cr
+   \code{age}, \code{age_at()} \tab Completed calendar years, an integer \cr
+   \code{sex} \tab Integer, 1 male (odd final digit), 0 female \cr
+   \code{koen} \tab Integer, 1 male, 2 female: the coding of \code{KOEN} in the registers of Statistics Denmark \cr
+   \code{valid} \tab Logical: ten digits and a real encoded date \cr
+   \code{status} \tab Factor: why a value is or is not valid \cr
+   \code{mod11} \tab Logical: the modulus-11 checksum \cr
+}
+
+
 \code{valid} checks ten digits and a real encoded calendar date, not whether
 the number was assigned to a person. Missing and malformed CPRs give
 \code{valid = FALSE} and missing birth date, age, and sex.
 \code{mod11} is a separate logical checksum, not a requirement for \code{valid}.
 Malformed formats give a missing checksum.
+
+\code{status} says what \code{valid} cannot: its levels are \code{valid}, \code{missing},
+\code{scientific}, \code{wrong_length}, \code{non_digit} and \code{invalid_date}, the problems
+of \code{\link[=diagnose_cpr]{diagnose_cpr()}}, where they are explained. \code{diagnose_cpr()}
+answers for a column, \code{status} for each row, so the rows can be filtered
+or counted by group.
+
+\code{sex} and \code{koen} hold the same information in two codings. \code{sex} is 0/1,
+which sums and averages directly; \code{koen} is 1/2 and compares directly
+with the \code{KOEN} variable of the registers
+(\url{https://www.dst.dk/da/TilSalg/data-til-forskning/generelt-om-data/dokumentation-af-data/hoejkvalitetsvariable/Folketal/KOEN}).
 
 CPR values are cleaned internally with \code{\link[=clean_cpr]{clean_cpr()}}. To also standardise
 the source column, use \code{dplyr::mutate(pnr = clean_cpr(pnr))} explicitly.
@@ -52,25 +74,30 @@ For a single piece of information inside \code{dplyr::mutate()} or
 
 The arguments have a dot prefix, as in dplyr, so that an output name
 never reaches them: R matches named arguments by partial name before
-\code{...}, and \code{d = bday} or \code{cpr = age(year)} would otherwise be taken as
+\code{...}, and \code{d = bday} or \code{cpr = age_at(year)} would otherwise be taken as
 \code{data} or \code{cpr_col}.
 
 For 29 February births, age advances on 1 March in non-leap years.
 A reference before birth gives a negative age. Use an explicit reference
 for reproducible analysis; today's date changes between runs.
 
-This selection API replaces \code{add}, \code{ref_date}, \code{year}, and \code{at} arguments:
-use \code{age(year, "primo")} or \code{age(date = reference_date)} instead.
-Unlike the previous API, the source CPR column is preserved.
+In daos, \code{add_cpr_info()} took \code{add}, \code{ref_date}, \code{year} and \code{at}
+arguments, and later the helper \code{age()}. Selections and
+\code{\link[=age_at]{age_at()}} replace them; each old form gives an error that points
+to the new one.
 }
 \examples{
 df <- data.frame(pnr = c("0101004007", "111111-1118"), year = 2024:2025)
 add_cpr_info(df, pnr)
 add_cpr_info(df, pnr, sex, birth_date = bday)
 add_cpr_info(df, pnr,
-  primoalder = age(year), ultimoalder = age(year, "ultimo"), sex)
-add_cpr_info(df, pnr, alder = age(date = "2025-07-01"))
+  primoalder = age_at(year), ultimoalder = age_at(year, "ultimo"), sex)
+add_cpr_info(df, pnr, alder = age_at("2025-07-01"))
+
+# Why a value is not valid, and sex as in the registers
+bad <- data.frame(pnr = c("0101004007", "3102004007", "1.01004E+08", NA))
+add_cpr_info(bad, pnr, status, koen)
 }
 \seealso{
-\code{\link[=age]{age()}}, \code{\link[=clean_cpr]{clean_cpr()}}, \code{\link[=cpr_birth_date]{cpr_birth_date()}}
+\code{\link[=age_at]{age_at()}}, \code{\link[=clean_cpr]{clean_cpr()}}, \code{\link[=cpr_birth_date]{cpr_birth_date()}}
 }

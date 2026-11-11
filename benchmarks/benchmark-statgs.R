@@ -25,19 +25,19 @@ for (n in c(1000L, 10000L)) {
   refs <- dates[seq_len(n)]
   cases <- list(
     age_scalar = list(
-      daos = function() add_cpr_info(df, pnr, age(date = "2026-07-01"))$age,
+      daos = function() add_cpr_info(df, pnr, age_at("2026-07-01"))$age,
       statgs = function() statgs$age(df$pnr, date = "2026-07-01")),
     age_row_dates = list(
-      daos = function() add_cpr_info(df, pnr, age(date = refs))$age,
+      daos = function() add_cpr_info(df, pnr, age_at(refs))$age,
       statgs = function() statgs$age(df$pnr, date = refs)),
     age_row_years = list(
-      daos = function() add_cpr_info(df, pnr, age(year))$age,
+      daos = function() add_cpr_info(df, pnr, age_at(year))$age,
       statgs = function() statgs$age(df$pnr, date = refs)),
     birth_date = list(
       daos = function() add_cpr_info(df, pnr, bday)$bday,
       statgs = function() statgs$dob(df$pnr)),
     all_outputs = list(
-      daos = function() add_cpr_info(df, pnr, bday, age(date = "2026-07-01"), sex, mod11, valid),
+      daos = function() add_cpr_info(df, pnr, bday, age_at("2026-07-01"), sex, mod11, valid),
       statgs = function() {
         out <- df
         out$pnr <- statgs$clean(df$pnr)
@@ -85,7 +85,7 @@ for (n in c(1000L, 10000L)) {
 # Explicit birthday example showing the different age definitions.
 edge <- data.frame(pnr = "0101014007")
 print(data.frame(date = "2026-01-01",
-                 daos = add_cpr_info(edge, pnr, age(date = "2026-01-01"))$age,
+                 daos = add_cpr_info(edge, pnr, age_at("2026-01-01"))$age,
                  statgs = statgs$age(edge$pnr, date = "2026-01-01")))
 writeLines(c(paste("statgs commit:", args[2L]),
              paste("pnrr commit (benchmark originally run in daos):", system("git rev-parse HEAD", intern = TRUE)),

@@ -41,9 +41,9 @@ test_that("cleaning and direct derivation share one normalisation contract", {
   cleaned <- clean_cpr(x)
   expect_identical(clean_cpr(cleaned), cleaned)
   direct <- add_cpr_info(data.frame(pnr = x), pnr,
-                        bday, sex, valid, mod11, age(2025))
+                        bday, sex, valid, mod11, age_at(2025))
   explicit <- add_cpr_info(data.frame(pnr = cleaned), pnr,
-                          bday, sex, valid, mod11, age(2025))
+                          bday, sex, valid, mod11, age_at(2025))
   expect_identical(direct[-1], explicit[-1])
   expect_identical(direct$pnr, x)
   expect_identical(cleaned[1:5], rep("0101004007", 5))
@@ -71,4 +71,30 @@ test_that("native cleaning matches the original R contract on varied input", {
     structure(c("101004007", "111111-1118"), class = "AsIs"),
     factor(c("101004007", "111111-1118")), c(101004007, NA, 1111111118))
   for (x in samples) expect_identical(clean_cpr(x), reference(x))
+})
+
+test_that("clean_cpr() strips invisible separators from Excel and Word", {
+  expect_equal(clean_cpr("010100–4007"), "0101004007")  # en dash
+  expect_equal(clean_cpr("010100—4007"), "0101004007")  # em dash
+  expect_equal(clean_cpr("010100−4007"), "0101004007")  # minus sign
+  expect_equal(clean_cpr(" 0101004007"), "0101004007")  # no-break space
+  expect_equal(clean_cpr("0101004007\t"), "0101004007")
+  expect_equal(clean_cpr(" 0101004007\r\n"), "0101004007")
+  expect_equal(clean_cpr("101004–007"), "0101004007")   # and still pads
+  latin1 <- iconv("010100 4007", "UTF-8", "latin1")
+  expect_identical(Encoding(latin1), "latin1")
+  expect_equal(clean_cpr(latin1), "0101004007")
+})
+
+test_that("clean_cpr() keeps other non-ASCII characters intact", {
+  x <- c("010100æ4007", "é", "010100/4007", "010100.4007")
+  expect_identical(clean_cpr(x), x)
+  expect_identical(Encoding(clean_cpr("æ-ø")), "UTF-8")
+  expect_equal(clean_cpr("æ-ø"), "æø")
+})
+
+test_that("clean_cpr() rejects data frames and lists", {
+  expect_error(clean_cpr(data.frame(pnr = "010100-4007")), "must be a vector of CPR numbers")
+  expect_error(clean_cpr(list("010100-4007")), "clean_cpr()", fixed = TRUE)
+  expect_equal(clean_cpr(factor("010100-4007")), "0101004007")
 })

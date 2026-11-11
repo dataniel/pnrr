@@ -5,6 +5,8 @@
 \alias{cpr_birth_year}
 \alias{cpr_sex}
 \alias{cpr_valid}
+\alias{cpr_koen}
+\alias{cpr_status}
 \alias{cpr_mod11}
 \title{Derive one piece of information from CPR numbers}
 \usage{
@@ -16,12 +18,16 @@ cpr_sex(x)
 
 cpr_valid(x)
 
+cpr_koen(x)
+
+cpr_status(x)
+
 cpr_mod11(x)
 }
 \arguments{
 \item{x}{A vector of CPR numbers. Values are read after the same cleaning
 as \code{\link[=clean_cpr]{clean_cpr()}}, so dashes, spaces and a lost leading zero do not
-matter. Numeric vectors and factors are converted with \code{as.character()}.}
+matter. Numbers are read as their digits, and factors as their labels.}
 }
 \value{
 A vector of the same length as \code{x}, without names.
@@ -39,7 +45,9 @@ The values are exactly those of the matching selection in
    \code{cpr_birth_date()} \tab \code{bday} \tab Date \cr
    \code{cpr_birth_year()} \tab \code{byear} \tab integer \cr
    \code{cpr_sex()} \tab \code{sex} \tab integer, 1 male (odd final digit), 0 female \cr
+   \code{cpr_koen()} \tab \code{koen} \tab integer, 1 male, 2 female \cr
    \code{cpr_valid()} \tab \code{valid} \tab logical, never \code{NA} \cr
+   \code{cpr_status()} \tab \code{status} \tab factor, never \code{NA} \cr
    \code{cpr_mod11()} \tab \code{mod11} \tab logical, \code{NA} when not ten digits \cr
 }
 
@@ -49,12 +57,23 @@ Birth date, birth year and sex are \code{NA} where \code{cpr_valid()} is \code{F
 number was assigned to a person; modulus 11 is not part of it, because
 the CPR office has issued numbers that fail it since 2007.
 
+\code{cpr_status()} says why. Its levels are \code{valid}, \code{missing}, \code{scientific},
+\code{wrong_length}, \code{non_digit} and \code{invalid_date}: the problems of
+\code{\link[=diagnose_cpr]{diagnose_cpr()}}, where each is explained, and always in agreement
+with it. \code{cpr_status(x) == "valid"} is \code{cpr_valid(x)}. It is a factor so
+that \code{table(cpr_status(x))} also shows the problems that did not occur.
+
+\code{cpr_sex()} and \code{cpr_koen()} hold the same information in two codings.
+\code{cpr_sex()} is 0/1, which sums and averages directly. \code{cpr_koen()} is 1/2
+as \code{KOEN} in the registers of Statistics Denmark, so the two can be
+compared without recoding.
+
 Birth year is its own function rather than an option of
 \code{cpr_birth_date()}, so each function always returns one type.
 
-Each call parses the CPR numbers again. That costs little, about a tenth
-of a second per million values, but when you need several columns,
-\code{\link[=add_cpr_info]{add_cpr_info()}} parses once for all of them.
+Each call parses the CPR numbers again. That costs little, a few
+hundredths of a second per million values, but when you need several
+columns, \code{\link[=add_cpr_info]{add_cpr_info()}} parses once for all of them.
 
 For age, see \code{\link[=cpr_age]{cpr_age()}}.
 }
@@ -63,7 +82,10 @@ x <- c("0101004007", "111111-1118", "101004007", "3102004007", NA)
 cpr_birth_date(x)
 cpr_birth_year(x)
 cpr_sex(x)
+cpr_koen(x)
 cpr_valid(x)
+cpr_status(x)
+table(cpr_status(x))
 cpr_mod11(x)
 
 # Typical use
@@ -73,5 +95,5 @@ cpr_mod11(x)
 
 }
 \seealso{
-\code{\link[=cpr_age]{cpr_age()}}, \code{\link[=add_cpr_info]{add_cpr_info()}}
+\code{\link[=cpr_age]{cpr_age()}}, \code{\link[=add_cpr_info]{add_cpr_info()}}, \code{\link[=diagnose_cpr]{diagnose_cpr()}}
 }

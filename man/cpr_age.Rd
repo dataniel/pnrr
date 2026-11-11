@@ -4,17 +4,19 @@
 \alias{cpr_age}
 \title{Age from CPR numbers}
 \usage{
-cpr_age(x, year, at = "primo", date, primo = "previous_ultimo")
+cpr_age(x, ref, at = "primo")
 }
 \arguments{
 \item{x}{A vector of CPR numbers, cleaned as in \code{\link[=clean_cpr]{clean_cpr()}}.}
 
-\item{year}{Numeric whole year(s): one for all, or one per CPR number.
-Inside \code{dplyr::mutate()} this can be a column, e.g. \code{cpr_age(pnr, year)}.}
+\item{ref}{The reference: whole numbers are years, a Date vector or ISO
+date strings (\code{"YYYY-MM-DD"}) are dates. One for all, or one per CPR
+number. Inside \code{dplyr::mutate()} this can be a column, e.g.
+\code{cpr_age(pnr, year)}. Left out, the age is today's.}
 
-\item{at, date, primo}{As in \code{\link[=age]{age()}}: \code{at} is \code{"primo"}, \code{"medio"} or
-\code{"ultimo"}; \code{date} is a Date vector or ISO date strings instead of
-\code{year}; \code{primo} is the convention for \code{at = "primo"}.}
+\item{at}{The day in the year, when \code{ref} is a year: \code{"primo"} (default,
+31 December of the year before), \code{"jan1"}, \code{"medio"} (1 July) or
+\code{"ultimo"} (31 December). As in \code{\link[=age_at]{age_at()}}.}
 }
 \value{
 An integer vector of the same length as \code{x}.
@@ -22,14 +24,14 @@ An integer vector of the same length as \code{x}.
 \description{
 The vector version of the \code{age} selection in \code{\link[=add_cpr_info]{add_cpr_info()}}: CPR
 numbers in, ages in completed calendar years out. It takes the same
-references as \code{\link[=age]{age()}}, but as values rather than column names, so
-it fits inside \code{dplyr::mutate()}.
+reference as \code{\link[=age_at]{age_at()}}, but as a value rather than a column name,
+so it fits inside \code{dplyr::mutate()}.
 }
 \details{
-With neither \code{year} nor \code{date}, age is today's. Use an explicit reference
-for reproducible analysis. The default \code{age(year)} convention applies:
-primo is 31 December of the previous year, so opening ages equal the
-previous year's closing ages. See \code{\link[=age]{age()}} for the conventions and
+Use an explicit reference for reproducible analysis; today's date changes
+between runs. \code{cpr_age(x, 2025)} is the age on 31 December 2024: primo is
+the closing of the year before, so opening ages equal the previous year's
+closing ages. See \code{\link[=age_at]{age_at()}} for the reasoning and
 \code{\link[=add_cpr_info]{add_cpr_info()}} for leap-day birthdays.
 
 Ages are \code{NA} for CPR numbers that are not valid (see \code{\link[=cpr_valid]{cpr_valid()}})
@@ -39,12 +41,12 @@ and for missing references.
 x <- c("0101004007", "111111-1118", "3102004007")
 cpr_age(x, 2025)
 cpr_age(x, 2025, "ultimo")
-cpr_age(x, date = "2025-07-01")
-cpr_age(x, year = c(2024, 2025, 2025))
+cpr_age(x, "2025-07-01")
+cpr_age(x, c(2024, 2025, 2025))
 
 # df |> dplyr::mutate(alder = cpr_age(pnr, year))
 
 }
 \seealso{
-\code{\link[=age]{age()}}, \code{\link[=add_cpr_info]{add_cpr_info()}}, \code{\link[=cpr_birth_date]{cpr_birth_date()}}
+\code{\link[=age_at]{age_at()}}, \code{\link[=add_cpr_info]{add_cpr_info()}}, \code{\link[=cpr_birth_date]{cpr_birth_date()}}
 }

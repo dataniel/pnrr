@@ -19,14 +19,14 @@
 #' * `valid`: ten digits encoding a real birth date, after the same
 #'   cleaning as [pnrr::clean_cpr()]. Validity is the same as in
 #'   [pnrr::add_cpr_info()].
-#' * `missing`: `NA`, or empty once dashes and spaces are removed.
+#' * `missing`: `NA`, or empty once separators are removed.
 #' * `scientific`: written in scientific notation, such as `"1.11111E+09"`.
 #'   Excel and some exports do this to long numbers. The trailing digits are
 #'   gone and cannot be restored; the source has to be read again with the
 #'   column as text.
 #'   `"1111111118.0"` and similar decimal forms are counted here too.
 #' * `wrong_length`: only digits, but not nine or ten of them.
-#' * `non_digit`: contains characters other than digits, dashes and spaces.
+#' * `non_digit`: contains characters other than digits and separators.
 #' * `invalid_date`: ten digits, but the first six are not a real date.
 #'
 #' The *notes* overlap with the problems and with each other. They are not
@@ -35,7 +35,9 @@
 #' * `zero_restored`: nine digits, padded with a leading zero. Birth days
 #'   01-09 make about a third of all CPR numbers start with a zero, and
 #'   Excel drops it from numeric cells.
-#' * `separators`: contained dashes or spaces.
+#' * `separators`: contained dashes, spaces or the invisible separators that
+#'   [pnrr::clean_cpr()] removes: tabs, line breaks, no-break spaces and
+#'   typographic dashes.
 #' * `mod11_fails`: valid, but fails the modulus-11 check. Since 2007 the CPR
 #'   office issues numbers that do not satisfy it, so this is not an error by
 #'   itself (<https://cpr.dk>). A large share among older birth dates can
@@ -74,7 +76,7 @@ diagnose_cpr <- function(x, as_of = Sys.Date()) {
     cli::cli_abort("{.arg x} must be a vector of CPR numbers, e.g. {.code df$pnr}.")
   }
   as_of <- .as_of_date(as_of)
-  if (!is.character(x)) x <- as.character(x)
+  x <- .cpr_text(x)
   oldest <- as.POSIXlt(as_of)
   oldest$year <- oldest$year - 120L
   oldest <- as.Date(oldest)
@@ -144,12 +146,12 @@ format.pnrr_diagnosis <- function(x, ...) {
     missing = "missing",
     scientific = "in scientific or decimal notation: digits are lost, read the source again as text",
     wrong_length = "with the wrong number of digits",
-    non_digit = "with characters other than digits, dashes and spaces",
+    non_digit = "with characters other than digits and separators",
     invalid_date = "with ten digits but no real birth date"
   )
   note_text <- c(
     zero_restored = "had lost a leading zero (Excel), restored by cleaning",
-    separators = "contained dashes or spaces",
+    separators = "contained dashes, spaces or invisible separators",
     mod11_fails = "valid but fail modulus 11 (allowed since 2007)",
     repeated = "valid, sharing their CPR number with another row",
     born_after_as_of = paste("born after", format(x$as_of)),

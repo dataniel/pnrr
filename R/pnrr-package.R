@@ -10,7 +10,7 @@
 #' * [diagnose_cpr()]: what is wrong with a CPR column, in counts and row
 #'   numbers, never in CPR numbers.
 #' * [clean_cpr()]: the canonical ten-digit form, for joins and export.
-#' * [add_cpr_info()] with [age()]: birth date, age, sex, modulus 11 and
+#' * [add_cpr_info()] with [age_at()]: birth date, age, sex, modulus 11 and
 #'   validity, in one native pass.
 #' * [cpr_birth_date()], [cpr_age()] and friends: the same information one
 #'   vector at a time, for `mutate()` and `filter()`.
@@ -18,9 +18,9 @@
 #'
 #' ## Why a package of its own
 #'
-#' `clean_cpr()`, `add_cpr_info()` and `age()` started in the daos package.
-#' They moved here, unchanged, when the CPR work grew beyond deriving
-#' columns: diagnosing a column and replacing the identifier belong with
+#' `clean_cpr()`, `add_cpr_info()` and its helper `age()`, now [age_at()],
+#' started in the daos package. They moved here when the CPR work grew
+#' beyond deriving columns: diagnosing a column and replacing the identifier belong with
 #' them and not with the general utilities in daos. pnrr depends only on cli
 #' and rlang, and daos does not depend on it, or it on daos.
 #'

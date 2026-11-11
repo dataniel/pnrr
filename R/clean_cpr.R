@@ -1,10 +1,16 @@
 #' Standardise CPR numbers
 #'
 #' Cleans a vector of Danish CPR numbers to the canonical 10-digit form:
-#' dashes and spaces are stripped, and nine-digit values consisting only of
+#' separators are stripped, and nine-digit values consisting only of
 #' digits are zero-padded on the left. The padding is well-founded: birth
 #' days 01-09 mean that roughly a third of all CPR numbers legitimately
 #' start with a zero, which Excel silently drops from numeric cells.
+#'
+#' Separators are dashes and spaces, and the characters that Excel, Word and
+#' copy-paste leave in their place and that cannot be told apart on screen:
+#' tabs and line breaks, the no-break space, and the typographic dashes
+#' (such as the en dash Word makes of a hyphen). Removing them never changes
+#' a digit.
 #'
 #' This is standardisation only, not validation. Values that cannot be
 #' brought to 10 digits are returned cleaned but otherwise untouched, so a
@@ -19,8 +25,9 @@
 #' identifier for joins or export. Already clean character vectors are
 #' returned without allocating a replacement vector.
 #'
-#' @param x A character vector of CPR numbers. Numeric vectors are
-#'   converted with `as.character()` first.
+#' @param x A character vector of CPR numbers. Numeric vectors and factors
+#'   are converted with `as.character()` first. Data frames and lists are an
+#'   error: pass the column, e.g. `df$pnr`.
 #'
 #' @return A character vector of the same length.
 #'
@@ -34,6 +41,10 @@
 #'
 #' @export
 clean_cpr <- function(x) {
-  if (!is.character(x)) x <- as.character(x)
+  # Lists only: a matrix or other atomic input keeps its attributes.
+  if (is.list(x)) {
+    cli::cli_abort("{.arg x} in {.code clean_cpr()} must be a vector of CPR numbers, e.g. {.code df$pnr}.")
+  }
+  x <- .cpr_text(x)
   .Call(C_pnrr_clean_cpr, x)
 }

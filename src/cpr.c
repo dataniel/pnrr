@@ -8,15 +8,33 @@
 #include <stdint.h>
 #include <string.h>
 
-/* Shared normalisation: remove ASCII spaces/dashes, pad exactly nine digits.
+/* Shared normalisation: remove separators, pad exactly nine digits.
    The parser never constructs cleaned R strings. clean_cpr uses the same scan. */
+
+/* Bytes of separator at s, 0 if none. Separators are the ASCII space, dash
+   and whitespace (tab, line breaks), and what Excel and Word put in their
+   place: the no-break space, the typographic dashes U+2010 to U+2015 and
+   the minus sign U+2212. These are read as UTF-8, or as single bytes in
+   strings marked Latin-1. */
+static int sep_len(const unsigned char *s, int latin1) {
+    unsigned char c = *s;
+    if (c == ' ' || c == '-' || (c >= '\t' && c <= '\r')) return 1;
+    if (c < 0x80) return 0;
+    if (latin1) return c == 0xA0 || c == 0x96 || c == 0x97;
+    if (c == 0xC2 && s[1] == 0xA0) return 2;
+    if (c == 0xE2) {
+        if (s[1] == 0x80 && s[2] >= 0x90 && s[2] <= 0x95) return 3;
+        if (s[1] == 0x88 && s[2] == 0x92) return 3;
+    }
+    return 0;
+}
 typedef struct {
     int digits[10];
     int valid_format;
     int changed;
     int pad;
-    int sep;        /* contained a space or dash */
-    int count;      /* bytes left after removing spaces and dashes */
+    int sep;        /* contained a separator */
+    int count;      /* bytes left after removing separators */
     int all_digits; /* those bytes are all ASCII digits */
 } CprScan;
 
@@ -24,10 +42,13 @@ static CprScan scan_cpr(SEXP string) {
     CprScan scan = {{0}, 0, 0, 0, 0, 0, 1};
     if (string == NA_STRING) return scan;
     const unsigned char *s = (const unsigned char *) CHAR(string);
-    int count = 0, all_digits = 1;
+    int count = 0, all_digits = 1, latin1 = Rf_getCharCE(string) == CE_LATIN1;
     for (; *s; ++s) {
-        if (*s == ' ' || *s == '-') { scan.changed = scan.sep = 1; continue; }
-        if (*s < '0' || *s > '9') all_digits = 0;
+        if (*s < '0' || *s > '9') {
+            int len = sep_len(s, latin1);
+            if (len) { scan.changed = scan.sep = 1; s += len - 1; continue; }
+            all_digits = 0;
+        }
         if (count < 10) scan.digits[count] = *s - '0';
         ++count;
     }
@@ -39,6 +60,20 @@ static CprScan scan_cpr(SEXP string) {
         scan.digits[0] = 0;
         scan.pad = scan.changed = 1;
     }
+    scan.valid_format = 1;
+    return scan;
+}
+
+/* A CPR number stored as a number: the digits are read directly, with the
+   result as.character() and scan_cpr() would give (a sign is a separator,
+   nine digits are padded), but without building a string per value. */
+static CprScan scan_number(double v) {
+    CprScan scan = {{0}, 0, 0, 0, 0, 0, 1};
+    if (!R_FINITE(v)) return scan;
+    v = fabs(v);
+    if (v < 1e8 || v >= 1e10 || v != floor(v)) return scan;
+    int64_t u = (int64_t) v;
+    for (int j = 9; j >= 0; --j) { scan.digits[j] = (int)(u % 10); u /= 10; }
     scan.valid_format = 1;
     return scan;
 }
@@ -64,10 +99,14 @@ SEXP pnrr_clean_cpr(SEXP x) {
             capacity = required > capacity * 2 ? required : capacity * 2;
             buffer = (char *) R_alloc(capacity, 1);
         }
-        const char *s = CHAR(string);
+        const unsigned char *s = (const unsigned char *) CHAR(string);
+        int latin1 = Rf_getCharCE(string) == CE_LATIN1;
         size_t k = 0;
         if (scan.pad) buffer[k++] = '0';
-        for (; *s; ++s) if (*s != ' ' && *s != '-') buffer[k++] = *s;
+        for (; *s; ++s) {
+            int len = sep_len(s, latin1);
+            if (len) s += len - 1; else buffer[k++] = (char) *s;
+        }
         SET_STRING_ELT(out, i, Rf_mkCharLenCE(buffer, (int)k, Rf_getCharCE(string)));
     }
     UNPROTECT(nprotect);
@@ -123,16 +162,23 @@ static void civil_from_days(double z, double *year, int *md) {
 
 typedef struct {
     const double *value;
+    const int *ivalue;  /* years stored as integers, else NULL */
     const SEXP *strings;
     int kind;
     int at;
+    int offset;         /* added to a year: -1 for the previous ultimo */
     R_xlen_t length;
     const char *name;
 } Reference;
 
 static void read_reference(const Reference *ref, R_xlen_t i, double *year, int *md) {
     R_xlen_t k = ref->length == 1 ? 0 : i;
-    if (ref->kind == 0) { *year = ref->value[k]; *md = ref->at; return; }
+    if (ref->kind == 0) {
+        *md = ref->at;
+        if (ref->ivalue) *year = ref->ivalue[k] == NA_INTEGER ? NA_REAL : ref->ivalue[k] + ref->offset;
+        else *year = ref->value[k] + ref->offset;
+        return;
+    }
     if (ref->kind == 1) { civil_from_days(ref->value[k], year, md); return; }
     SEXP string = ref->strings[k];
     if (string == NA_STRING) { *year = NA_REAL; *md = 0; return; }
@@ -156,11 +202,44 @@ static void read_reference(const Reference *ref, R_xlen_t i, double *year, int *
     *year = y; *md = m*100 + d;
 }
 
-/* codes: 0 bday, 1 age, 2 sex, 3 mod11, 4 valid, 5 byear. One CPR scan per row. */
+/* Year references are validated here, in one pass and without the temporary
+   vectors the same test costs in R. NA is allowed and gives a missing age.
+   0: fine; 1: not whole years between 1 and 9999; 2: a year below min. */
+SEXP pnrr_year_status(SEXP value, SEXP min) {
+    int lo = Rf_asInteger(min), status = 0;
+    R_xlen_t n = XLENGTH(value);
+    if (TYPEOF(value) == INTSXP) {
+        const int *v = INTEGER(value);
+        for (R_xlen_t i = 0; i < n; ++i) {
+            if (v[i] == NA_INTEGER) continue;
+            if (v[i] < 1 || v[i] > 9999) return Rf_ScalarInteger(1);
+            if (v[i] < lo) status = 2;
+        }
+    } else if (TYPEOF(value) == REALSXP) {
+        const double *v = REAL(value);
+        for (R_xlen_t i = 0; i < n; ++i) {
+            double y = v[i];
+            if (ISNAN(y)) continue;
+            if (!(y >= 1 && y <= 9999) || y != floor(y)) return Rf_ScalarInteger(1);
+            if (y < lo) status = 2;
+        }
+    } else status = 1;
+    return Rf_ScalarInteger(status);
+}
+
+static int status_of(SEXP string, const CprScan *scan, int date_ok);
+
+/* codes: 0 bday, 1 age, 2 sex, 3 mod11, 4 valid, 5 byear, 6 koen, 7 status.
+   One CPR scan per row. x is character, or numeric with the CPR numbers as
+   numbers; status works on the written form and needs character. */
 SEXP pnrr_cpr_info(SEXP x, SEXP codes, SEXP references) {
-    if (TYPEOF(x) != STRSXP || TYPEOF(codes) != INTSXP || TYPEOF(references) != VECSXP)
+    int xtype = TYPEOF(x);
+    if ((xtype != STRSXP && xtype != REALSXP && xtype != INTSXP) ||
+        TYPEOF(codes) != INTSXP || TYPEOF(references) != VECSXP)
         Rf_error("Internal error: invalid CPR arguments.");
     R_xlen_t n = XLENGTH(x);
+    const double *xreal = xtype == REALSXP ? REAL(x) : NULL;
+    const int *xint = xtype == INTSXP ? INTEGER(x) : NULL;
     int p = Rf_length(codes);
     const int *type = INTEGER(codes);
     SEXP out = PROTECT(Rf_allocVector(VECSXP, p));
@@ -169,11 +248,13 @@ SEXP pnrr_cpr_info(SEXP x, SEXP codes, SEXP references) {
     Reference *refs = (Reference *) R_alloc(p, sizeof(Reference));
     double *scalar_year = (double *) R_alloc(p, sizeof(double));
     int *scalar_md = (int *) R_alloc(p, sizeof(int));
-    int need_calendar = 0, need_checksum = 0, need_bday = 0;
+    int need_calendar = 0, need_checksum = 0, need_bday = 0, need_status = 0;
     for (int j = 0; j < p; ++j) {
         int code = type[j];
-        if (code < 0 || code > 5) Rf_error("Internal error: unknown CPR output.");
+        if (code < 0 || code > 7) Rf_error("Internal error: unknown CPR output.");
+        if (code == 7 && xtype != STRSXP) Rf_error("Internal error: status needs character input.");
         need_calendar |= code != 3; need_checksum |= code == 3; need_bday |= code == 0;
+        need_status |= code == 7;
         int logical = code == 3 || code == 4;
         SEXP col = PROTECT(Rf_allocVector(code == 0 ? REALSXP : (logical ? LGLSXP : INTSXP), n));
         if (code == 0) {
@@ -182,6 +263,17 @@ SEXP pnrr_cpr_info(SEXP x, SEXP codes, SEXP references) {
             UNPROTECT(1);
             reals[j] = REAL(col);
         } else ints[j] = logical ? LOGICAL(col) : INTEGER(col);
+        if (code == 7) {
+            /* A factor, with the statuses of diagnose_cpr() as levels. */
+            static const char *const names[] = {"valid", "missing", "scientific",
+                "wrong_length", "non_digit", "invalid_date"};
+            SEXP levels = PROTECT(Rf_allocVector(STRSXP, 6));
+            for (int l = 0; l < 6; ++l) SET_STRING_ELT(levels, l, Rf_mkChar(names[l]));
+            Rf_setAttrib(col, R_LevelsSymbol, levels);
+            SEXP cls = PROTECT(Rf_mkString("factor"));
+            Rf_setAttrib(col, R_ClassSymbol, cls);
+            UNPROTECT(2);
+        }
         SET_VECTOR_ELT(out, j, col);
         UNPROTECT(1);
         if (code == 1) {
@@ -192,14 +284,22 @@ SEXP pnrr_cpr_info(SEXP x, SEXP codes, SEXP references) {
             refs[j].name = CHAR(STRING_ELT(VECTOR_ELT(spec, 3), 0));
             refs[j].length = XLENGTH(value);
             if (refs[j].length != 1 && refs[j].length != n) Rf_error("Internal error: reference length mismatch.");
-            if (refs[j].kind == 2) refs[j].strings = STRING_PTR_RO(value);
-            else refs[j].value = REAL(value);
+            refs[j].ivalue = NULL;
+            refs[j].offset = refs[j].kind == 0 ? Rf_asInteger(VECTOR_ELT(spec, 4)) : 0;
+            int vtype = TYPEOF(value);
+            if (refs[j].kind == 2 && vtype == STRSXP) refs[j].strings = STRING_PTR_RO(value);
+            else if (refs[j].kind == 0 && vtype == INTSXP) refs[j].ivalue = INTEGER(value);
+            else if (refs[j].kind != 2 && vtype == REALSXP) refs[j].value = REAL(value);
+            else Rf_error("Internal error: invalid reference type.");
             if (refs[j].length == 1) read_reference(&refs[j], 0, &scalar_year[j], &scalar_md[j]);
         }
     }
     for (R_xlen_t i = 0; i < n; ++i) {
         if ((i & 65535) == 0) R_CheckUserInterrupt();
-        CprScan scan = scan_cpr(STRING_ELT(x, i));
+        SEXP string = xtype == STRSXP ? STRING_ELT(x, i) : R_NilValue;
+        CprScan scan = xreal ? scan_number(xreal[i])
+            : xint ? scan_number(xint[i] == NA_INTEGER ? NA_REAL : xint[i])
+            : scan_cpr(string);
         int valid = 0, y = 0, m = 0, d = 0, checksum = NA_LOGICAL;
         double bday = NA_REAL;
         if (scan.valid_format) {
@@ -210,11 +310,13 @@ SEXP pnrr_cpr_info(SEXP x, SEXP codes, SEXP references) {
             if (need_checksum) checksum = mod11(scan.digits);
         }
         /* Integer outputs by code; bday (0) and age (1) are handled apart. */
-        int fixed[6];
+        int fixed[8];
         fixed[2] = valid ? scan.digits[9] % 2 : NA_INTEGER;
         fixed[3] = checksum;
         fixed[4] = valid;
         fixed[5] = valid ? y : NA_INTEGER;
+        fixed[6] = valid ? 2 - scan.digits[9] % 2 : NA_INTEGER;
+        fixed[7] = need_status ? status_of(string, &scan, valid) + 1 : NA_INTEGER;
         for (int j = 0; j < p; ++j) {
             int code = type[j];
             if (code == 0) reals[j][i] = bday;
@@ -232,14 +334,15 @@ SEXP pnrr_cpr_info(SEXP x, SEXP codes, SEXP references) {
 }
 
 /* Matches ^[0-9]+([.,][0-9]+)?([eE][+]?[0-9]+)?$ with at least a decimal
-   part or an exponent, ignoring spaces and dashes as clean_cpr does. */
-static int is_scientific(const unsigned char *s) {
+   part or an exponent, ignoring separators as clean_cpr does. */
+static int is_scientific(const unsigned char *s, int latin1) {
     /* 0 integer digits, 1 after separator, 2 fraction digits,
        3 after e, 4 after +, 5 exponent digits */
     int state = 0, digits = 0;
     for (; *s; ++s) {
         unsigned char c = *s;
-        if (c == ' ' || c == '-') continue;
+        int len = sep_len(s, latin1);
+        if (len) { s += len - 1; continue; }
         int digit = c >= '0' && c <= '9';
         switch (state) {
             case 0:
@@ -265,9 +368,20 @@ static int is_scientific(const unsigned char *s) {
     return state == 2 || state == 5;
 }
 
-/* One pass for diagnose_cpr(). Each value gets one status:
-   0 valid, 1 missing, 2 scientific, 3 wrong_length, 4 non_digit,
-   5 invalid_date; and note bits: 1 zero_restored, 2 separators,
+/* The one status every value has: 0 valid, 1 missing, 2 scientific,
+   3 wrong_length, 4 non_digit, 5 invalid_date. date_ok says whether a
+   value in valid format encodes a real date. Shared by diagnose_cpr() and
+   the status selection, so the two cannot disagree. */
+static int status_of(SEXP string, const CprScan *scan, int date_ok) {
+    if (string == NA_STRING || scan->count == 0) return 1;
+    if (scan->valid_format) return date_ok ? 0 : 5;
+    if (scan->all_digits) return 3;
+    return is_scientific((const unsigned char *) CHAR(string),
+                         Rf_getCharCE(string) == CE_LATIN1) ? 2 : 4;
+}
+
+/* One pass for diagnose_cpr(). Each value gets one status, as in
+   status_of(); and note bits: 1 zero_restored, 2 separators,
    4 mod11_fails, 8 born after as_of, 16 born before oldest.
    Returns the row numbers of the 11 checks, a numeric key for valid
    values (for repeats), the birth date range and the count of males. */
@@ -287,26 +401,22 @@ SEXP pnrr_cpr_diagnose(SEXP x, SEXP as_of, SEXP oldest) {
         if ((i & 65535) == 0) R_CheckUserInterrupt();
         SEXP string = STRING_ELT(x, i);
         CprScan scan = scan_cpr(string);
-        int st, nb = scan.pad | (scan.sep << 1);
+        int y = 0, m = 0, d = 0;
+        int date_ok = scan.valid_format && decode_birth(scan.digits, &y, &m, &d);
+        int st = status_of(string, &scan, date_ok), nb = scan.pad | (scan.sep << 1);
         k[i] = NA_REAL;
-        if (string == NA_STRING || scan.count == 0) st = 1;
-        else if (scan.valid_format) {
-            int y, m, d;
-            if (decode_birth(scan.digits, &y, &m, &d)) {
-                st = 0;
-                double bday = days_from_civil(y, m, d);
-                if (!mod11(scan.digits)) nb |= 4;
-                if (bday > after) nb |= 8;
-                if (bday < before) nb |= 16;
-                if (bday < first) first = bday;
-                if (bday > last) last = bday;
-                male += scan.digits[9] % 2;
-                double value = 0;
-                for (int j = 0; j < 10; ++j) value = value * 10 + scan.digits[j];
-                k[i] = value;
-            } else st = 5;
-        } else if (scan.all_digits) st = 3;
-        else st = is_scientific((const unsigned char *) CHAR(string)) ? 2 : 4;
+        if (st == 0) {
+            double bday = days_from_civil(y, m, d);
+            if (!mod11(scan.digits)) nb |= 4;
+            if (bday > after) nb |= 8;
+            if (bday < before) nb |= 16;
+            if (bday < first) first = bday;
+            if (bday > last) last = bday;
+            male += scan.digits[9] % 2;
+            double value = 0;
+            for (int j = 0; j < 10; ++j) value = value * 10 + scan.digits[j];
+            k[i] = value;
+        }
         status[i] = (unsigned char) st;
         notes[i] = (unsigned char) nb;
         ++counts[st];
@@ -339,6 +449,7 @@ SEXP pnrr_cpr_diagnose(SEXP x, SEXP as_of, SEXP oldest) {
 static const R_CallMethodDef call_methods[] = {
     {"pnrr_clean_cpr", (DL_FUNC) &pnrr_clean_cpr, 1},
     {"pnrr_cpr_info", (DL_FUNC) &pnrr_cpr_info, 3},
+    {"pnrr_year_status", (DL_FUNC) &pnrr_year_status, 2},
     {"pnrr_cpr_diagnose", (DL_FUNC) &pnrr_cpr_diagnose, 3},
     {NULL, NULL, 0}
 };
