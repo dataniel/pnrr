@@ -111,4 +111,4 @@ allocation test, all standard outputs allocated 23.5 MiB versus 1,661 MiB in
 the baseline. These are total R allocations, not peak memory. Cleaning an
 already canonical vector allocated no new R memory in that measurement.
 
-The checkpoint benchmark moved to the expectr package with the checkpoints.
+The checkpoint benchmark moved to the inshape package with the checkpoints.
